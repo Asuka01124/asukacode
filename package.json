@@ -1,0 +1,38 @@
+{
+  "name": "asukacode",
+  "version": "1.0.0",
+  "description": "A coding agent powered by AI",
+  "type": "module",
+  "scripts": {
+    "compile": "bun build --compile ./tui/src/entry.tsx --outfile asukacode-win32-x64 && node scripts/set-icon.mjs ./asukacode-win32-x64.exe ./docs/icon.ico",
+    "compile:linux-x64": "bun build --compile --target=bun-linux-x64 ./tui/src/entry.tsx --outfile asukacode-linux-x64",
+    "compile:linux-arm64": "bun build --compile --target=bun-linux-arm64 ./tui/src/entry.tsx --outfile asukacode-linux-arm64",
+    "compile:darwin-arm64": "bun build --compile --target=bun-darwin-arm64 ./tui/src/entry.tsx --outfile asukacode-darwin-arm64"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.4.1",
+    "@opentui/core-darwin-arm64": "^0.4.2",
+    "@opentui/core-linux-arm64": "^0.4.2",
+    "@opentui/core-linux-arm64-musl": "^0.4.2",
+    "@opentui/core-linux-x64": "^0.4.2",
+    "@opentui/core-linux-x64-musl": "^0.4.2",
+    "@opentui/core-win32-arm64": "^0.4.2",
+    "@opentui/react": "^0.4.1",
+    "dotenv": "^17.4.2",
+    "gray-matter": "^4.0.3",
+    "openai": "^6.42.0",
+    "react": "^19.2.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "rcedit": "^5.0.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

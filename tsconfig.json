@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": true,
+    "types": ["node"]
+  },
+  "include": [
+    "*.ts",
+    "core/config/*.ts",
+    "core/tools/*.ts",
+    "core/compact/*.ts",
+    "core/memory/*.ts",
+    "core/skills/*.ts",
+    "core/systemContext/*.ts",
+    "core/database/*.ts"
+  ]
+}

@@ -1,0 +1,298 @@
+import { useState, useEffect, useRef } from "react"
+import { useKeyboard, useTerminalDimensions } from "@opentui/react"
+import { theme } from "../theme"
+import type { ConversationEntry, ContextStats, SessionInfo, CommandPaletteItem, TodoItem } from "../types"
+import { Sidebar } from "./Sidebar"
+import { UserMessage } from "./UserMessage"
+import { AssistantMessage } from "./AssistantMessage"
+import { InputBar } from "./InputBar"
+import { Picker, type PickerItem } from "./Picker"
+import { pipe } from "../../../core/agent/events.js"
+import type { AppEvent, PermissionPayload, QuestionPayload } from "../../../core/agent/events.js"
+import { getDB } from "../../../core/database/database.js"
+import { listSessions } from "../../../core/database/messages.js"
+import { SKILL_REGISTRY } from "../../../core/skills/skills.js"
+
+const SIDEBAR_MIN_TERM_WIDTH = 80
+
+const SLASH_COMMANDS: CommandPaletteItem[] = [
+  { id: "new", label: "new", description: "开启新对话" },
+  { id: "clear", label: "clear", description: "清空对话" },
+  { id: "resume", label: "resume", description: "加载历史对话" },
+  { id: "skill", label: "skill", description: "查看可用技能" },
+  { id: "help", label: "help", description: "查看帮助" },
+]
+
+const MENTION_ITEMS: CommandPaletteItem[] = []
+
+function parseSlashCommand(text: string): AppEvent | null {
+  if (!text.startsWith("/")) return null
+  const space = text.indexOf(" ")
+  const cmd = space === -1 ? text.slice(1) : text.slice(1, space)
+  const args = space === -1 ? "" : text.slice(space + 1).trim()
+  switch (cmd) {
+    case 'new':   return { type: 'cmd:new' }
+    case 'clear': return { type: 'cmd:clear' }
+    case 'resume': return { type: 'cmd:resume', sessionId: args || undefined }
+    case 'skill': return { type: 'cmd:skill' }
+    case 'help':  return { type: 'cmd:help' }
+    default:      return null
+  }
+}
+
+export interface AppProps {
+  onSubmit: (text: string) => void
+  onStop?: () => void
+  onNew?: () => void
+  onResume?: (sessionId: string) => void
+  initialConversation?: ConversationEntry[]
+  initialSessionName?: string
+  model?: string
+}
+
+export function App({ onSubmit, onStop, onNew, onResume, initialConversation, initialSessionName, model }: AppProps) {
+  const [conversation, setConversation] = useState<ConversationEntry[]>(initialConversation ?? [])
+  const [inputFocused, setInputFocused] = useState(true)
+  const [running, setRunning] = useState(false)
+  const [inputKey, setInputKey] = useState(0)
+
+  const [context, setContext] = useState<ContextStats>({
+    tokens: 0,
+    tokenLimit: 200_000,
+    costUsd: 0,
+  })
+
+  const [session, setSession] = useState<SessionInfo>({
+    id: "",
+    name: initialSessionName ?? "",
+    elapsedSeconds: 0,
+  })
+
+  useEffect(() => {
+    return pipe.use((ev: AppEvent, next) => {
+      switch (ev.type) {
+
+        case 'cmd:clear':
+          setConversation([])
+          setInputKey(k => k + 1)
+          return
+        case 'cmd:new':
+          setConversation([])
+          setInputKey(k => k + 1)
+          setRunning(false)
+          onNew?.()
+          return
+        case 'cmd:help':
+          setConversation(prev => [...prev, {
+            type: "assistant_message",
+            id: crypto.randomUUID(),
+            heading: "帮助",
+            lines: [
+              "/new     — 开启新对话",
+              "/clear   — 清空当前对话",
+              "/resume  — 加载历史对话",
+              "/help    — 显示此帮助",
+              "Ctrl+C   — 双击退出",
+            ],
+          }])
+          return
+        case 'cmd:skill': {
+          const skills = [...SKILL_REGISTRY.values()]
+          if (skills.length === 0) {
+            setConversation(prev => [...prev, {
+              type: "assistant_message", id: crypto.randomUUID(),
+              lines: ["没有找到任何技能"],
+            }])
+          } else {
+            setPicker({
+              items: skills.map(s => ({
+                id: s.name,
+                label: s.name,
+                description: s.description.length > 50 ? s.description.slice(0, 50) + "..." : s.description,
+              })),
+              onSelect: (id) => {
+                setPicker(null)
+                setTimeout(() => {
+                  const skill = SKILL_REGISTRY.get(id)
+                  const text = skill ? `/load_skill ${id}` : id
+                  setConversation(prev => [...prev, {
+                    type: "user_message", id: crypto.randomUUID(), content: text
+                  }])
+                  setRunning(true)
+                  onSubmit(text)
+                }, 0)
+              },
+            })
+          }
+          return
+        }
+        case 'cmd:resume':
+          if (ev.sessionId) {
+            onResume?.(ev.sessionId)
+            setPicker(null)
+          } else {
+            const sessions = listSessions(getDB(), 20)
+            setPicker({
+              items: sessions.map(s => ({
+                id: s.sessionId,
+                label: new Date(s.lastAt * 1000).toLocaleString(),
+                description: s.preview,
+              })),
+              onSelect: (id) => {
+                onResume?.(id)
+                setPicker(null)
+              },
+            })
+          }
+          return
+
+        case 'assistant_delta':
+          setConversation(prev => [...prev, {
+            type: "assistant_message", id: crypto.randomUUID(), lines: [ev.content]
+          }])
+          break
+        case 'finished':
+          setRunning(false)
+          break
+        case 'error':
+          setConversation(prev => [...prev, {
+            type: "assistant_message", id: crypto.randomUUID(), lines: [`Error: ${ev.error}`]
+          }])
+          setRunning(false)
+          break
+        case 'task_list':
+          setTodos(ev.tasks)
+          break
+        case 'state_changed':
+          setSession(prev => ({
+            ...prev,
+            id: ev.sessionId,
+          }))
+          break
+        case 'context_stats':
+          setContext({
+            tokens: ev.totalTokens,
+            tokenLimit: ev.contextWindow,
+            costUsd: 0,
+          })
+          break
+        case 'question': {
+          const { question, options, resolve } = ev.payload
+          setPicker({
+            items: options.map((o, i) => ({
+              id: String(i),
+              label: o.label,
+              description: o.description,
+            })),
+            onSelect: (id) => {
+              setPicker(null)
+              resolve(options[Number(id)]?.label ?? id)
+            },
+          })
+          return
+        }
+        case 'permission':
+          setPermission(ev.payload)
+          return
+      }
+      next()
+    })
+  }, [])
+
+  const [permission, setPermission] = useState<PermissionPayload | null>(null)
+  const [picker, setPicker] = useState<{ items: PickerItem[]; onSelect: (id: string) => void } | null>(null)
+  const [todos, setTodos] = useState<TodoItem[]>([])
+
+  useEffect(() => {
+    if (!running) return
+    const start = Date.now()
+    const timer = setInterval(() => {
+      setSession(prev => ({
+        ...prev,
+        elapsedSeconds: Math.floor((Date.now() - start) / 1000),
+      }))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [running])
+
+  const handleSubmit = (value: string) => {
+    if (running) return
+    const cmd = parseSlashCommand(value)
+    if (cmd) { pipe.run(cmd); return }
+
+    setConversation(prev => [...prev, {
+      type: "user_message", id: crypto.randomUUID(), content: value
+    }])
+    setSession(prev => prev.name ? prev : { ...prev, name: value.slice(0, 50) })
+    setRunning(true)
+    setInputKey(k => k + 1)
+    onSubmit(value)
+  }
+
+  const lastCtrlC = useRef(0)
+
+  useKeyboard((key) => {
+    if (key.ctrl && key.name === "c") {
+      const now = Date.now()
+      if (now - lastCtrlC.current < 1000) {
+        process.exit(0)
+      }
+      lastCtrlC.current = now
+      return
+    }
+    if (permission) {
+      if (key.name === "y") { permission.approve(); setPermission(null) }
+      if (key.name === "n") { permission.deny(); setPermission(null) }
+    }
+  })
+
+  const { width: termWidth } = useTerminalDimensions()
+
+  return (
+    <box width="100%" height="100%" flexDirection="column" backgroundColor={theme.color.appBg}>
+      <box flexDirection="row" flexGrow={1} overflow="hidden">
+        <box flexDirection="column" flexGrow={1} overflow="hidden">
+          <scrollbox flexDirection="column" flexGrow={1} gap={theme.space.md} scrollY stickyScroll stickyStart="bottom" verticalScrollbarOptions={{ visible: false }} scrollAcceleration={{ tick: () => 3, reset: () => {} }} marginLeft={2} marginRight={2} focusable={false}>
+            {conversation.map((entry) => {
+              if (entry.type === "user_message") return <UserMessage key={entry.id} content={entry.content} />
+              if (entry.type === "assistant_message") return <AssistantMessage key={entry.id} entry={entry} />
+              return null
+            })}
+          </scrollbox>
+
+          {permission && (
+            <box flexShrink={0} flexDirection="row" gap={2} marginLeft={2} marginRight={2} marginBottom={1}
+              padding={theme.space.xs} backgroundColor={theme.color.permissionBg}>
+              <text fg={theme.color.green}>[y] Allow</text>
+              <text fg={theme.color.red}>[n] Deny</text>
+            </box>
+          )}
+
+          {picker && (
+            <Picker
+              items={picker.items}
+              onSelect={picker.onSelect}
+              onCancel={() => setPicker(null)}
+            />
+          )}
+
+          <InputBar
+            key={inputKey}
+            onSubmit={handleSubmit}
+            busy={running || !!picker}
+            focused={inputFocused && !permission}
+            mode={running ? "running" : "idle"}
+            model={model || "unknown"}
+            placeholder={running ? "Agent is thinking..." : "Ask anything..."}
+            slashItems={SLASH_COMMANDS}
+            mentionItems={MENTION_ITEMS}
+          />
+        </box>
+
+        {termWidth >= SIDEBAR_MIN_TERM_WIDTH && (
+          <Sidebar context={context} session={session} todos={todos} flexShrink={1} />
+        )}
+      </box>
+    </box>
+  )
+}
