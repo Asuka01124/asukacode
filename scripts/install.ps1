@@ -1,8 +1,8 @@
 # AsukaCode Windows Installer
-# Usage: irm https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
-$Repo = "YOUR_USERNAME/asukacode"
+$Repo = "Asuka01124/asukacode"
 $Version = "latest"
 $InstallDir = "$env:LOCALAPPDATA\asukacode\bin"
 

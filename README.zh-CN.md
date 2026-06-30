@@ -69,13 +69,13 @@ GitHub Releases 提供 Windows x64 预编译二进制。其他平台可自行构
 ### Windows x64
 
 ```powershell
-irm https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
 ```
 
 ### Linux x64
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 ```
 
 ### 其他平台（macOS ARM、Linux ARM、Windows ARM 等）
@@ -83,7 +83,7 @@ curl -fsSL https://raw.githubusercontent.com/<user>/asukacode/main/scripts/insta
 暂无预编译二进制，可 clone 仓库后自行构建：
 
 ```bash
-git clone https://github.com/<user>/asukacode
+git clone https://github.com/Asuka01124/asukacode
 cd asukacode
 bun install
 bun run compile      # 当前平台
@@ -108,7 +108,7 @@ asukacode
 ### 本地开发
 
 ```bash
-git clone https://github.com/your-username/asukacode
+git clone https://github.com/Asuka01124/asukacode
 cd asukacode
 bun install
 bun run ./tui/src/entry.tsx

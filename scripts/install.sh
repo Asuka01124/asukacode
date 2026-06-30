@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # AsukaCode Linux/macOS Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 
 set -e
-REPO="YOUR_USERNAME/asukacode"
+REPO="Asuka01124/asukacode"
 VERSION="latest"
 INSTALL_DIR="$HOME/.local/bin"
 

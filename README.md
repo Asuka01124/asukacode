@@ -28,13 +28,13 @@ AsukaCode is a terminal coding agent built with Bun + TypeScript + OpenTUI. Comp
 ### Windows x64
 
 ```powershell
-irm https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
 ```
 
 ### Linux x64
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<user>/asukacode/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 ```
 
 ### Other Platforms
@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/<user>/asukacode/main/scripts/insta
 Clone and build from source:
 
 ```bash
-git clone https://github.com/<user>/asukacode
+git clone https://github.com/Asuka01124/asukacode
 cd asukacode
 bun install
 bun run compile
