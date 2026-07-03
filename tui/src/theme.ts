@@ -18,7 +18,6 @@ export const theme = {
     paletteBg: "#1e1e1e",
     permissionBg: "#332200",
 
-    paletteLeftStrip: "#2a3038",
     paletteHighlight: "#fab283",
 
     progressTrack: "#161b22",
@@ -29,7 +28,7 @@ export const theme = {
     md: 2,
   },
   layout: {
-    sidebarWidth: 42,
+    sidebarWidth: 54,
     headerHeight: 3,
     statusBarHeight: 1,
     

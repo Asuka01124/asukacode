@@ -1,7 +1,7 @@
-import { theme } from "../theme"
+import { theme } from "../theme";
 
 export interface UserMessageProps {
-  content: string
+  content: string;
 }
 
 export function UserMessage({ content }: UserMessageProps) {
@@ -9,13 +9,13 @@ export function UserMessage({ content }: UserMessageProps) {
     <box
       flexShrink={0}
       flexDirection="row"
+      width="100%"
       backgroundColor={theme.color.inputBg}
-      paddingLeft={1}
-      paddingRight={2}
-      paddingTop={1}
-      paddingBottom={1}
     >
-      <text fg={theme.color.text}>{content}</text>
+      <box width={1} backgroundColor={theme.color.blue} flexShrink={0} />
+      <box paddingLeft={2} paddingRight={2} paddingTop={1} paddingBottom={1}>
+        <text fg={theme.color.text}>{content}</text>
+      </box>
     </box>
-  )
+  );
 }
