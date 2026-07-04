@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AsukaCode Linux/macOS Installer
+# AsukaCode Linux Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 
 set -e
@@ -9,7 +9,6 @@ INSTALL_DIR="$HOME/.local/bin"
 
 case "$(uname -s)" in
   Linux)  BINARY="asukacode-linux-x64" ;;
-  Darwin) BINARY="asukacode-darwin-arm64" ;;
   *)      echo "Unsupported platform: $(uname -s)"; exit 1 ;;
 esac
 

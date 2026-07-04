@@ -64,12 +64,18 @@ AsukaCode 适合你，如果你想要：
 
 ## 安装
 
-GitHub Releases 提供 Windows x64 预编译二进制。其他平台可自行构建。
+GitHub Releases 提供预编译二进制。
 
-### Windows x64
+### Windows
 
+**PowerShell**（推荐）:
 ```powershell
 irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
+```
+
+**CMD**:
+```cmd
+curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 ### Linux x64
@@ -78,7 +84,7 @@ irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.
 curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 ```
 
-### 其他平台（macOS ARM、Linux ARM、Windows ARM 等）
+### 其他平台
 
 暂无预编译二进制，可 clone 仓库后自行构建：
 

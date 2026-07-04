@@ -25,10 +25,16 @@ AsukaCode is a terminal coding agent built with Bun + TypeScript + OpenTUI. Comp
 
 ## Install
 
-### Windows x64
+### Windows
 
+**PowerShell** (推荐):
 ```powershell
 irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
+```
+
+**CMD**:
+```cmd
+curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 ### Linux x64

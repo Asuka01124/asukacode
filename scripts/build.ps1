@@ -3,7 +3,7 @@
 # Usage: .\scripts\build.ps1 [-Target <platform>] [-All]
 
 param(
-    [ValidateSet("win-x64", "linux-x64", "linux-arm64", "darwin-arm64", "all")]
+    [ValidateSet("win-x64", "linux-x64", "linux-arm64", "all")]
     [string]$Target = "win-x64",
     [switch]$All,
     [switch]$NoIcon
@@ -64,13 +64,11 @@ if ($All -or $Target -eq "all") {
     $Success = $Success -and (Build-Binary "win-x64" "bun-windows-x64" ".exe")
     $Success = $Success -and (Build-Binary "linux-x64" "bun-linux-x64")
     $Success = $Success -and (Build-Binary "linux-arm64" "bun-linux-arm64")
-    $Success = $Success -and (Build-Binary "darwin-arm64" "bun-darwin-arm64")
 } else {
     switch ($Target) {
         "win-x64"     { Build-Binary "win-x64" "bun-windows-x64" ".exe" }
         "linux-x64"   { Build-Binary "linux-x64" "bun-linux-x64" }
         "linux-arm64" { Build-Binary "linux-arm64" "bun-linux-arm64" }
-        "darwin-arm64"{ Build-Binary "darwin-arm64" "bun-darwin-arm64" }
     }
 }
 

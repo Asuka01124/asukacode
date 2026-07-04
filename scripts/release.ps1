@@ -24,8 +24,7 @@ Write-Host "Creating release v$Version..." -ForegroundColor Cyan
 $Binaries = @(
     "asukacode-win32-x64.exe",
     "asukacode-linux-x64",
-    "asukacode-linux-arm64",
-    "asukacode-darwin-arm64"
+    "asukacode-linux-arm64"
 )
 
 $Missing = @()
@@ -61,7 +60,12 @@ $ReleaseNotes = @"
 irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
 ```
 
-**Linux/macOS:**
+**Windows (CMD):**
+```cmd
+curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+**Linux x64:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
 ```
@@ -70,7 +74,6 @@ curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/i
 - ``asukacode-win32-x64.exe`` - Windows x64
 - ``asukacode-linux-x64`` - Linux x64
 - ``asukacode-linux-arm64`` - Linux ARM64
-- ``asukacode-darwin-arm64`` - macOS Apple Silicon
 "@
 
 # Create release
