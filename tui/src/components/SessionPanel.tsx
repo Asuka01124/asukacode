@@ -1,9 +1,9 @@
-import { TextAttributes } from "@opentui/core"
-import { theme } from "../theme"
-import type { SessionInfo } from "../types"
+import { TextAttributes } from "@opentui/core";
+import { theme } from "../theme";
+import type { SessionInfo } from "../types";
 
 export interface SessionPanelProps {
-  session: SessionInfo
+  session: SessionInfo;
 }
 
 export function SessionPanel({ session }: SessionPanelProps) {
@@ -19,10 +19,7 @@ export function SessionPanel({ session }: SessionPanelProps) {
         Session
       </text>
       <box height={1} />
-      <text fg={theme.color.textMuted}>ID: {session.id}</text>
-      <text fg={theme.color.text}>
-        {session.name || "(新会话)"}
-      </text>
+      <text fg={theme.color.text}>{session.name || "(新会话)"}</text>
     </box>
-  )
+  );
 }

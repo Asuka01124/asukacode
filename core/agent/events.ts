@@ -7,6 +7,7 @@ export type AppEvent =
   | { type: 'cmd:skill' }
   | { type: 'cmd:thinking' }
   | { type: 'cmd:tool' }
+  | { type: 'cmd:icon' }
   
   | { type: 'task_list'; tasks: Array<{ id: string; text: string; done: boolean }> }
 

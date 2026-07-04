@@ -10,6 +10,7 @@
     "compile:darwin-arm64": "bun build --compile --target=bun-darwin-arm64 ./tui/src/entry.tsx --outfile asukacode-darwin-arm64"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "@opentui/core": "^0.4.1",
     "@opentui/core-darwin-arm64": "^0.4.2",
     "@opentui/core-linux-arm64": "^0.4.2",

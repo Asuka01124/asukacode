@@ -31,22 +31,17 @@ export function InputBar({
 
   const updateTrigger = useCallback((text: string) => {
     textRef.current = text;
-    const lastSlash = text.lastIndexOf("/");
-    const lastAt = text.lastIndexOf("@");
-    let type: TriggerChar;
-    let startIndex: number;
-    if (lastSlash > lastAt) {
-      type = "/";
-      startIndex = lastSlash;
-    } else if (lastAt > lastSlash) {
-      type = "@";
-      startIndex = lastAt;
-    } else {
-      setTrigger(null);
+    if (text.startsWith("/")) {
+      setTrigger({ type: "/", query: text.slice(1), startIndex: 0 });
+      setHighlightIndex(0);
       return;
     }
-    setTrigger({ type, query: text.slice(startIndex + 1), startIndex });
-    setHighlightIndex(0);
+    if (text.startsWith("@")) {
+      setTrigger({ type: "@", query: text.slice(1), startIndex: 0 });
+      setHighlightIndex(0);
+      return;
+    }
+    setTrigger(null);
   }, []);
 
   const getFilteredItems = useCallback((): CommandPaletteItem[] => {

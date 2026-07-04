@@ -1,4 +1,4 @@
-import { make, combine } from "./syscontext.js"
+import { make, combine, type SystemContext } from "./syscontext.js"
 import { register } from "./registry.js"
 
 function getEnvironment(): string {

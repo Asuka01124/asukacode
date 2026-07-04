@@ -4,7 +4,7 @@ export type ModelContextWindow = {
   effectiveInput: number
 }
 
-type ModelContextRule = {
+export type ModelContextRule = {
   patterns: readonly string[]
   contextWindow: number
   outputReserve: number

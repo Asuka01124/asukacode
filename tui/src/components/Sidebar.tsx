@@ -9,6 +9,7 @@ export interface SidebarProps {
   context: ContextStats
   session: SessionInfo
   todos: TodoItem[]
+  icon?: string
   flexShrink?: number
   overflow?: "hidden" | "scroll" | "visible"
 }
@@ -17,6 +18,7 @@ export function Sidebar({
   context,
   session,
   todos,
+  icon,
   flexShrink = 0,
   overflow = "visible",
 }: SidebarProps) {
@@ -34,7 +36,7 @@ export function Sidebar({
       paddingRight={0}
       gap={1}
     >
-      <Mascot />
+      <Mascot icon={icon} />
       <ContextPanel stats={context} />
       <SessionPanel session={session} />
       {todos.length > 0 && <TasksPanel todos={todos} />}

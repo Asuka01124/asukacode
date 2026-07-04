@@ -2,7 +2,7 @@ import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"
 import { App } from "./components/App.js"
 import { AgentSession } from "../../core/agent/session.js"
-import { loadOrInitConfig } from "../../core/config/manager.js"
+import { loadOrInitConfig, saveConfig } from "../../core/config/manager.js"
 import { getDB } from "../../core/database/database.js"
 import { getMessages } from "../../core/database/messages.js"
 import type { ConversationEntry } from "./types.js"
@@ -73,6 +73,7 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
       initialConversation={initialConversation}
       initialSessionName={sessionName}
       model={config.model}
+      icon={config.icon}
       onSubmit={(text) => session.ask(text)}
       onStop={() => session.stop()}
       onNew={() => {
@@ -83,6 +84,11 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
         session = new AgentSession(config, sessionId)
         const { entries, name } = loadConversation(sessionId)
         render(entries, name)
+      }}
+      onIconChange={(icon) => {
+        config.icon = icon
+        saveConfig(config)
+        render()
       }}
     />
   )

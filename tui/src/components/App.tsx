@@ -25,6 +25,7 @@ import type {
 import { getDB } from "../../../core/database/database.js";
 import { listSessions } from "../../../core/database/messages.js";
 import { SKILL_REGISTRY } from "../../../core/skills/skills.js";
+import { ICON_NAMES, ICONS } from "../icons/index.js";
 
 const SIDEBAR_MIN_TERM_WIDTH = 80;
 
@@ -48,6 +49,8 @@ function parseSlashCommand(text: string): AppEvent | null {
       return { type: "cmd:thinking" };
     case "tool":
       return { type: "cmd:tool" };
+    case "icon":
+      return { type: "cmd:icon" };
     case "help":
       return { type: "cmd:help" };
     default:
@@ -60,9 +63,11 @@ export interface AppProps {
   onStop?: () => void;
   onNew?: () => void;
   onResume?: (sessionId: string) => void;
+  onIconChange?: (icon: string) => void;
   initialConversation?: ConversationEntry[];
   initialSessionName?: string;
   model?: string;
+  icon?: string;
 }
 
 export function App({
@@ -70,9 +75,11 @@ export function App({
   onStop,
   onNew,
   onResume,
+  onIconChange,
   initialConversation,
   initialSessionName,
   model,
+  icon,
 }: AppProps) {
   const [conversation, setConversation] = useState<ConversationEntry[]>(
     initialConversation ?? [],
@@ -88,8 +95,22 @@ export function App({
     { id: "clear", label: "clear", description: "清空对话" },
     { id: "resume", label: "resume", description: "加载历史对话" },
     { id: "skill", label: "skill", description: "查看可用技能" },
-    { id: "thinking", label: "thinking", description: thinkingMode === "hide" ? "开启思考过程显示" : "折叠思考过程" },
-    { id: "tool", label: "tool", description: showToolDetails ? "隐藏工具调用" : "显示工具调用" },
+    {
+      id: "icon",
+      label: "icon",
+      description: `切换侧栏图标 (当前: ${icon || "crab"})`,
+    },
+    {
+      id: "thinking",
+      label: "thinking",
+      description:
+        thinkingMode === "hide" ? "开启思考过程显示" : "折叠思考过程",
+    },
+    {
+      id: "tool",
+      label: "tool",
+      description: showToolDetails ? "隐藏工具调用" : "显示工具调用",
+    },
     { id: "help", label: "help", description: "查看帮助" },
   ];
 
@@ -130,6 +151,7 @@ export function App({
                 "/clear     — 清空当前对话",
                 "/resume    — 加载历史对话",
                 "/skill     — 查看可用技能",
+                "/icon      — 切换侧栏图标",
                 "/thinking  — 切换思考过程显示",
                 "/tool      — 切换工具调用显示",
                 "/help      — 显示此帮助",
@@ -167,10 +189,14 @@ export function App({
                   ? allSkills.filter(
                       (s) =>
                         s.label.toLowerCase().includes(query.toLowerCase()) ||
-                        s.description?.toLowerCase().includes(query.toLowerCase()),
+                        s.description
+                          ?.toLowerCase()
+                          .includes(query.toLowerCase()),
                     )
                   : allSkills;
-                setPicker((prev) => (prev ? { ...prev, items: filtered } : null));
+                setPicker((prev) =>
+                  prev ? { ...prev, items: filtered } : null,
+                );
               },
               onSelect: (id) => {
                 setPicker(null);
@@ -201,9 +227,7 @@ export function App({
               type: "assistant_message",
               id: crypto.randomUUID(),
               lines: [
-                thinkingMode === "hide"
-                  ? "思考过程已显示"
-                  : "思考过程已隐藏",
+                thinkingMode === "hide" ? "思考过程已显示" : "思考过程已隐藏",
               ],
             },
           ]);
@@ -216,15 +240,38 @@ export function App({
             {
               type: "assistant_message",
               id: crypto.randomUUID(),
-              lines: [
-                showToolDetails
-                  ? "工具调用已隐藏"
-                  : "工具调用已显示",
-              ],
+              lines: [showToolDetails ? "工具调用已隐藏" : "工具调用已显示"],
             },
           ]);
           setInputKey((k) => k + 1);
           return;
+        case "cmd:icon": {
+          const allIcons = ICON_NAMES.map((name) => ({
+            id: name,
+            label: name,
+            description: ICONS[name]?.description || "",
+          }));
+          setPicker({
+            items: allIcons,
+            searchable: true,
+            onSearch: (query) => {
+              const filtered = query
+                ? allIcons.filter(
+                    (f) =>
+                      f.label.toLowerCase().includes(query.toLowerCase()) ||
+                      f.description.toLowerCase().includes(query.toLowerCase()),
+                  )
+                : allIcons;
+              setPicker((prev) => (prev ? { ...prev, items: filtered } : null));
+            },
+            onSelect: (id) => {
+              setPicker(null);
+              onIconChange?.(id);
+              setInputKey((k) => k + 1);
+            },
+          });
+          return;
+        }
         case "cmd:resume":
           if (ev.sessionId) {
             onResume?.(ev.sessionId);
@@ -245,10 +292,14 @@ export function App({
                   ? allSessions.filter(
                       (s) =>
                         s.label.toLowerCase().includes(query.toLowerCase()) ||
-                        s.description?.toLowerCase().includes(query.toLowerCase()),
+                        s.description
+                          ?.toLowerCase()
+                          .includes(query.toLowerCase()),
                     )
                   : allSessions;
-                setPicker((prev) => (prev ? { ...prev, items: filtered } : null));
+                setPicker((prev) =>
+                  prev ? { ...prev, items: filtered } : null,
+                );
               },
               onSelect: (id) => {
                 onResume?.(id);
@@ -314,7 +365,9 @@ export function App({
                 {
                   ...last,
                   output: ev.output,
-                  status: (ev.denied ? "denied" : "completed") as "denied" | "completed",
+                  status: (ev.denied ? "denied" : "completed") as
+                    | "denied"
+                    | "completed",
                   endTime: Date.now(),
                 },
               ];
@@ -457,6 +510,16 @@ export function App({
             marginBottom={2}
             focusable={false}
           >
+            <box flexDirection="column" paddingTop={2} marginBottom={1}>
+              <ascii-font
+                text="ASUKACODE"
+                font="block"
+                color={theme.color.pinkBright}
+              />
+              <text fg={theme.color.textMuted} marginTop={1}>
+                Terminal AI Coding Assistant
+              </text>
+            </box>
             {conversation.map((entry) => {
               if (entry.type === "user_message")
                 return <UserMessage key={entry.id} content={entry.content} />;
@@ -471,12 +534,7 @@ export function App({
                   />
                 );
               if (entry.type === "tool_call")
-                return (
-                  <ToolCallMessage
-                    key={entry.id}
-                    entry={entry}
-                  />
-                );
+                return <ToolCallMessage key={entry.id} entry={entry} />;
               return null;
             })}
           </scrollbox>
@@ -531,6 +589,7 @@ export function App({
             context={context}
             session={session}
             todos={todos}
+            icon={icon}
             flexShrink={1}
           />
         )}
