@@ -58,7 +58,9 @@ export async function runLoop(
         model,
         messages: msgs,
         tools: TOOLS,
-      });
+        reasoning_effort: "high",
+        extra_body: { thinking: { type: "enabled" } },
+      } as any);
     } catch (err) {
       if (isPromptTooLong(err)) {
         msgs = await reactiveCompact(sessionId, msgs, client, model);
@@ -70,6 +72,13 @@ export async function runLoop(
 
     const assistant = response.choices[0].message;
     const content = typeof assistant.content === "string" ? assistant.content : null;
+    const reasoningContent = (assistant as any).reasoning_content ?? null;
+
+    if (reasoningContent) {
+      pipe.run({ type: 'thinking_start', sessionId });
+      pipe.run({ type: 'thinking_delta', sessionId, content: reasoningContent });
+      pipe.run({ type: 'thinking_end', sessionId });
+    }
 
     if (content) {
       pipe.run({ type: 'assistant_delta', sessionId, content });

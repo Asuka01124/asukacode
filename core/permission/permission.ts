@@ -1,47 +1,137 @@
 import path from "node:path";
 import { pipe, PermissionPayload } from "../agent/events.js";
+import { match } from "./wildcard.js";
+import { parse, collectPaths, initParser } from "./shell-parser.js";
+import { checkPath } from "./path-check.js";
+import { getCommandPrefix } from "./arity.js";
+import type { Ruleset, Effect } from "./schema.js";
 
-const WORKDIR = process.cwd()
+const WORKDIR = process.cwd();
 
-const DENY_LIST = [
-  "rm -rf /", "sudo", "shutdown", "reboot", "mkfs",
-  "dd if=", "> /dev/sda",
-]
-const DESTRUCTIVE = [
-  "rm ", "del ", "erase ", "rd ", "rmdir ",
-  "> /etc/", "chmod 777"
-]
+let parserInitialized = false;
 
-export async function checkToolPermission(
-  block: { name: string; input: Record<string, unknown> },
-): Promise<string | null> {
-  const cmd: string = String(block.input.command ?? "")
-  const filePath: string = String(block.input.path ?? "")
+async function ensureParser(): Promise<void> {
+  if (parserInitialized) return;
+  try {
+    const wasmDir = path.join(
+      process.cwd(),
+      "node_modules",
+      "tree-sitter-bash",
+    );
+    await initParser(wasmDir);
+    parserInitialized = true;
+  } catch {
+    // Parser initialization failed, continue without AST parsing
+  }
+}
+
+const DENY_LIST: Ruleset = [
+  { action: "bash", resource: "rm -rf /", effect: "deny" },
+  { action: "bash", resource: "sudo *", effect: "deny" },
+  { action: "bash", resource: "shutdown *", effect: "deny" },
+  { action: "bash", resource: "reboot *", effect: "deny" },
+  { action: "bash", resource: "mkfs *", effect: "deny" },
+  { action: "bash", resource: "dd if=*", effect: "deny" },
+  { action: "bash", resource: "mkswap *", effect: "deny" },
+  { action: "bash", resource: "swapoff *", effect: "deny" },
+  { action: "bash", resource: "swapon *", effect: "deny" },
+];
+
+const DEFAULT_RULES: Ruleset = [
+  { action: "bash", resource: "rm *", effect: "ask" },
+  { action: "bash", resource: "del *", effect: "ask" },
+  { action: "bash", resource: "erase *", effect: "ask" },
+  { action: "bash", resource: "rd *", effect: "ask" },
+  { action: "bash", resource: "rmdir *", effect: "ask" },
+  { action: "bash", resource: "chmod *", effect: "ask" },
+  { action: "bash", resource: "chown *", effect: "ask" },
+  { action: "bash", resource: "mv *", effect: "ask" },
+  { action: "bash", resource: "cp *", effect: "ask" },
+  { action: "read", resource: "*.env", effect: "ask" },
+  { action: "read", resource: "*.env.*", effect: "ask" },
+  { action: "read", resource: ".env.*", effect: "ask" },
+];
+
+function evaluate(action: string, resource: string, rules: Ruleset): Effect {
+  const rule = rules.findLast(
+    (r) => match(action, r.action) && match(resource, r.resource),
+  );
+  return rule?.effect ?? "ask";
+}
+
+export async function checkToolPermission(block: {
+  name: string;
+  input: Record<string, unknown>;
+}): Promise<string | null> {
+  const cmd: string = String(block.input.command ?? "");
+  const filePath: string = String(block.input.path ?? "");
 
   if (block.name === "bash") {
-    for (const pattern of DENY_LIST) {
-      if (cmd.includes(pattern)) {
-        return "Permission denied by deny list"
+    for (const rule of DENY_LIST) {
+      if (match("bash", rule.action) && match(cmd, rule.resource)) {
+        return "Permission denied by deny list";
       }
     }
-    for (const kw of DESTRUCTIVE) {
-      if (cmd.includes(kw)) {
-        const result = await askUser(block.name, block.input, "Potentially destructive command")
-        if (result === "deny") return "Permission denied by user"
-        break
+
+    await ensureParser();
+
+    const tree = parse(cmd);
+    if (tree) {
+      const scan = collectPaths(tree, WORKDIR);
+
+      for (const dir of scan.dirs) {
+        const result = checkPath(dir, WORKDIR, WORKDIR);
+        if (!result.safe) {
+          const userResult = await askUser(
+            block.name,
+            block.input,
+            `Path outside workspace: ${result.reason}`,
+          );
+          if (userResult === "deny") return "Permission denied by user";
+        }
       }
+    }
+
+    const tokens = cmd.split(/\s+/).filter(Boolean);
+    const prefix = getCommandPrefix(tokens);
+    const effect = evaluate("bash", prefix + " *", DEFAULT_RULES);
+
+    if (effect === "deny") return "Permission denied by rule";
+    if (effect === "ask") {
+      const userResult = await askUser(
+        block.name,
+        block.input,
+        "Command requires approval",
+      );
+      if (userResult === "deny") return "Permission denied by user";
     }
   }
 
   if (block.name === "write_file" || block.name === "edit_file") {
-    const resolved = path.resolve(WORKDIR, filePath)
-    if (!resolved.startsWith(WORKDIR)) {
-      const result = await askUser(block.name, block.input, "Writing outside workspace")
-      if (result === "deny") return "Permission denied by user"
+    const result = checkPath(filePath, WORKDIR, WORKDIR);
+    if (!result.safe) {
+      const userResult = await askUser(
+        block.name,
+        block.input,
+        `Writing outside workspace: ${result.reason}`,
+      );
+      if (userResult === "deny") return "Permission denied by user";
     }
   }
 
-  return null
+  if (block.name === "read_file") {
+    const result = checkPath(filePath, WORKDIR, WORKDIR);
+    if (!result.safe) {
+      const userResult = await askUser(
+        block.name,
+        block.input,
+        `Reading outside workspace: ${result.reason}`,
+      );
+      if (userResult === "deny") return "Permission denied by user";
+    }
+  }
+
+  return null;
 }
 
 function askUser(
@@ -51,16 +141,22 @@ function askUser(
 ): Promise<"allow" | "deny"> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
-      resolve("deny")
-    }, 100_000)
+      resolve("deny");
+    }, 100_000);
 
     const payload: PermissionPayload = {
       toolName,
       args,
       reason,
-      approve: () => { clearTimeout(timer); resolve("allow") },
-      deny: () => { clearTimeout(timer); resolve("deny") },
-    }
-    pipe.run({ type: 'permission', payload })
-  })
+      approve: () => {
+        clearTimeout(timer);
+        resolve("allow");
+      },
+      deny: () => {
+        clearTimeout(timer);
+        resolve("deny");
+      },
+    };
+    pipe.run({ type: "permission", payload });
+  });
 }

@@ -88,8 +88,6 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
   )
 }
 
-resetTerminal()
-
 try {
   render()
 } catch (err) {

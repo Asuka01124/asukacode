@@ -5,9 +5,15 @@ export type AppEvent =
   | { type: 'cmd:help' }
   | { type: 'cmd:resume'; sessionId?: string }
   | { type: 'cmd:skill' }
+  | { type: 'cmd:thinking' }
+  | { type: 'cmd:tool' }
+  
   | { type: 'task_list'; tasks: Array<{ id: string; text: string; done: boolean }> }
 
   | { type: 'assistant_delta'; sessionId: string; content: string }
+  | { type: 'thinking_start'; sessionId: string }
+  | { type: 'thinking_delta'; sessionId: string; content: string }
+  | { type: 'thinking_end'; sessionId: string }
   | { type: 'tool_start'; sessionId: string; name: string; input: unknown }
   | { type: 'tool_end'; sessionId: string; name: string; output: string; denied?: boolean }
   | { type: 'finished'; sessionId: string }

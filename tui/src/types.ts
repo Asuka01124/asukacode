@@ -1,4 +1,4 @@
-export type ToolCallStatus = "running" | "completed" | "error"
+export type ToolCallStatus = "pending" | "running" | "completed" | "error" | "denied"
 
 export interface ThoughtStep {
   id: string
@@ -32,7 +32,12 @@ export interface CommandEchoEntry {
 export interface ToolCallEntry {
   type: "tool_call"
   id: string
-  data: ToolCallEvent
+  name: string
+  input: unknown
+  output?: string
+  status: ToolCallStatus
+  startTime: number
+  endTime?: number
 }
 
 export interface UserMessageEntry {
@@ -50,7 +55,13 @@ export interface AssistantMessageEntry {
   ordered?: boolean
 }
 
-export type ConversationEntry = CommandEchoEntry | ToolCallEntry | UserMessageEntry | AssistantMessageEntry
+export interface ThinkingEntry {
+  type: "thinking"
+  id: string
+  lines: string[]
+}
+
+export type ConversationEntry = CommandEchoEntry | ToolCallEntry | UserMessageEntry | AssistantMessageEntry | ThinkingEntry
 
 export interface ContextStats {
   tokens: number

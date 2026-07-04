@@ -11,6 +11,9 @@ import type {
 import { Sidebar } from "./Sidebar";
 import { UserMessage } from "./UserMessage";
 import { AssistantMessage } from "./AssistantMessage";
+import { ThinkingMessage } from "./ThinkingMessage";
+import { ToolCallMessage } from "./ToolCallMessage";
+import { PermissionDialog } from "./PermissionDialog";
 import { InputBar } from "./InputBar";
 import { Picker, type PickerItem } from "./Picker";
 import { pipe } from "../../../core/agent/events.js";
@@ -24,14 +27,6 @@ import { listSessions } from "../../../core/database/messages.js";
 import { SKILL_REGISTRY } from "../../../core/skills/skills.js";
 
 const SIDEBAR_MIN_TERM_WIDTH = 80;
-
-const SLASH_COMMANDS: CommandPaletteItem[] = [
-  { id: "new", label: "new", description: "开启新对话" },
-  { id: "clear", label: "clear", description: "清空对话" },
-  { id: "resume", label: "resume", description: "加载历史对话" },
-  { id: "skill", label: "skill", description: "查看可用技能" },
-  { id: "help", label: "help", description: "查看帮助" },
-];
 
 const MENTION_ITEMS: CommandPaletteItem[] = [];
 
@@ -49,6 +44,10 @@ function parseSlashCommand(text: string): AppEvent | null {
       return { type: "cmd:resume", sessionId: args || undefined };
     case "skill":
       return { type: "cmd:skill" };
+    case "thinking":
+      return { type: "cmd:thinking" };
+    case "tool":
+      return { type: "cmd:tool" };
     case "help":
       return { type: "cmd:help" };
     default:
@@ -81,6 +80,18 @@ export function App({
   const [inputFocused, setInputFocused] = useState(true);
   const [running, setRunning] = useState(false);
   const [inputKey, setInputKey] = useState(0);
+  const [thinkingMode, setThinkingMode] = useState<"show" | "hide">("hide");
+  const [showToolDetails, setShowToolDetails] = useState(true);
+
+  const slashCommands: CommandPaletteItem[] = [
+    { id: "new", label: "new", description: "开启新对话" },
+    { id: "clear", label: "clear", description: "清空对话" },
+    { id: "resume", label: "resume", description: "加载历史对话" },
+    { id: "skill", label: "skill", description: "查看可用技能" },
+    { id: "thinking", label: "thinking", description: thinkingMode === "hide" ? "开启思考过程显示" : "折叠思考过程" },
+    { id: "tool", label: "tool", description: showToolDetails ? "隐藏工具调用" : "显示工具调用" },
+    { id: "help", label: "help", description: "查看帮助" },
+  ];
 
   const [context, setContext] = useState<ContextStats>({
     tokens: 0,
@@ -115,14 +126,18 @@ export function App({
               id: crypto.randomUUID(),
               heading: "帮助",
               lines: [
-                "/new     — 开启新对话",
-                "/clear   — 清空当前对话",
-                "/resume  — 加载历史对话",
-                "/help    — 显示此帮助",
-                "Ctrl+C   — 双击退出",
+                "/new       — 开启新对话",
+                "/clear     — 清空当前对话",
+                "/resume    — 加载历史对话",
+                "/skill     — 查看可用技能",
+                "/thinking  — 切换思考过程显示",
+                "/tool      — 切换工具调用显示",
+                "/help      — 显示此帮助",
+                "Ctrl+C     — 双击退出",
               ],
             },
           ]);
+          setInputKey((k) => k + 1);
           return;
         case "cmd:skill": {
           const skills = [...SKILL_REGISTRY.values()];
@@ -178,10 +193,43 @@ export function App({
           }
           return;
         }
+        case "cmd:thinking":
+          setThinkingMode((prev) => (prev === "hide" ? "show" : "hide"));
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: "assistant_message",
+              id: crypto.randomUUID(),
+              lines: [
+                thinkingMode === "hide"
+                  ? "思考过程已显示"
+                  : "思考过程已隐藏",
+              ],
+            },
+          ]);
+          setInputKey((k) => k + 1);
+          return;
+        case "cmd:tool":
+          setShowToolDetails((prev) => !prev);
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: "assistant_message",
+              id: crypto.randomUUID(),
+              lines: [
+                showToolDetails
+                  ? "工具调用已隐藏"
+                  : "工具调用已显示",
+              ],
+            },
+          ]);
+          setInputKey((k) => k + 1);
+          return;
         case "cmd:resume":
           if (ev.sessionId) {
             onResume?.(ev.sessionId);
             setPicker(null);
+            setInputKey((k) => k + 1);
           } else {
             const sessions = listSessions(getDB(), 20);
             const allSessions = sessions.map((s) => ({
@@ -219,6 +267,60 @@ export function App({
               lines: [ev.content],
             },
           ]);
+          break;
+        case "thinking_start":
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: "thinking",
+              id: crypto.randomUUID(),
+              lines: [],
+            },
+          ]);
+          break;
+        case "thinking_delta":
+          setConversation((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.type === "thinking") {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, lines: [...last.lines, ev.content] },
+              ];
+            }
+            return prev;
+          });
+          break;
+        case "thinking_end":
+          break;
+        case "tool_start":
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: "tool_call",
+              id: crypto.randomUUID(),
+              name: ev.name,
+              input: ev.input,
+              status: "running" as const,
+              startTime: Date.now(),
+            },
+          ]);
+          break;
+        case "tool_end":
+          setConversation((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.type === "tool_call" && last.name === ev.name) {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  ...last,
+                  output: ev.output,
+                  status: (ev.denied ? "denied" : "completed") as "denied" | "completed",
+                  endTime: Date.now(),
+                },
+              ];
+            }
+            return prev;
+          });
           break;
         case "finished":
           setRunning(false);
@@ -329,16 +431,6 @@ export function App({
       lastCtrlC.current = now;
       return;
     }
-    if (permission) {
-      if (key.name === "y") {
-        permission.approve();
-        setPermission(null);
-      }
-      if (key.name === "n") {
-        permission.deny();
-        setPermission(null);
-      }
-    }
   });
 
   const { width: termWidth } = useTerminalDimensions();
@@ -370,24 +462,39 @@ export function App({
                 return <UserMessage key={entry.id} content={entry.content} />;
               if (entry.type === "assistant_message")
                 return <AssistantMessage key={entry.id} entry={entry} />;
+              if (entry.type === "thinking")
+                return (
+                  <ThinkingMessage
+                    key={entry.id}
+                    entry={entry}
+                    expanded={thinkingMode === "show"}
+                  />
+                );
+              if (entry.type === "tool_call")
+                return (
+                  <ToolCallMessage
+                    key={entry.id}
+                    entry={entry}
+                  />
+                );
               return null;
             })}
           </scrollbox>
 
           {permission && (
-            <box
-              flexShrink={0}
-              flexDirection="row"
-              gap={2}
-              marginLeft={2}
-              marginRight={2}
-              marginBottom={1}
-              padding={theme.space.xs}
-              backgroundColor={theme.color.permissionBg}
-            >
-              <text fg={theme.color.green}>[y] Allow</text>
-              <text fg={theme.color.red}>[n] Deny</text>
-            </box>
+            <PermissionDialog
+              payload={{
+                ...permission,
+                approve: () => {
+                  permission.approve();
+                  setPermission(null);
+                },
+                deny: () => {
+                  permission.deny();
+                  setPermission(null);
+                },
+              }}
+            />
           )}
 
           {picker && (
@@ -413,8 +520,8 @@ export function App({
             focused={inputFocused && !permission && !picker}
             mode={running ? "running" : "idle"}
             model={model || "unknown"}
-            placeholder={running ? "Agent is thinking..." : "Ask anything..."}
-            slashItems={SLASH_COMMANDS}
+            placeholder=""
+            slashItems={slashCommands}
             mentionItems={MENTION_ITEMS}
           />
         </box>

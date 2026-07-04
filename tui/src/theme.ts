@@ -16,7 +16,7 @@ export const theme = {
     sidebarBg: "#141414",
     inputBg: "#1e1e1e",
     paletteBg: "#1e1e1e",
-    permissionBg: "#332200",
+    permissionBg: "#ffddf8",
 
     paletteHighlight: "#fab283",
 

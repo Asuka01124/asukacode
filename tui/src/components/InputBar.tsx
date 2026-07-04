@@ -19,8 +19,8 @@ export function InputBar({
   placeholder = "",
   focused = false,
   busy = false,
-  mode = "chat",
-  model = "claude-sonnet-4-6",
+  mode = "",
+  model = "",
   slashItems = [],
   mentionItems = [],
 }: InputBarPropsExtended) {
@@ -65,9 +65,9 @@ export function InputBar({
 
   const closePalette = useCallback(() => {
     setTrigger(null);
-    // 确保焦点回到输入框
     setTimeout(() => {
       textareaRef.current?.focus();
+      textareaRef.current?.gotoBufferHome();
     }, 0);
   }, []);
 
@@ -77,9 +77,12 @@ export function InputBar({
       const insertText = item.insertText ?? `${trigger.type}${item.label}`;
       if (trigger.type === "/") {
         onSubmit(insertText.trim());
+        textareaRef.current?.setText("");
+        textRef.current = "";
         closePalette();
       } else {
-        const newText = textRef.current.slice(0, trigger.startIndex) + insertText + " ";
+        const newText =
+          textRef.current.slice(0, trigger.startIndex) + insertText + " ";
         textareaRef.current?.setText(newText);
         textRef.current = newText;
         closePalette();
@@ -135,6 +138,7 @@ export function InputBar({
           }}
           onCancel={closePalette}
           searchable={false}
+          footer={<text fg={theme.color.textDim}>Enter 选择 Esc 取消</text>}
         />
       )}
 
@@ -165,7 +169,7 @@ export function InputBar({
             }}
             onKeyDown={(e) => {
               if (e.name === "return" && !e.shift) {
-                if (busy) return;
+                if (busy || paletteOpen) return;
                 e.preventDefault();
                 handleSubmit();
               }
