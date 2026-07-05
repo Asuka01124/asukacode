@@ -1,5 +1,6 @@
 import path from "node:path";
 import { pipe, PermissionPayload } from "../agent/events.js";
+import type { AgentMode } from "../agent/events.js";
 import { match } from "./wildcard.js";
 import { parse, collectPaths, initParser } from "./shell-parser.js";
 import { checkPath } from "./path-check.js";
@@ -62,7 +63,14 @@ function evaluate(action: string, resource: string, rules: Ruleset): Effect {
 export async function checkToolPermission(block: {
   name: string;
   input: Record<string, unknown>;
+  mode?: AgentMode;
 }): Promise<string | null> {
+  if (
+    block.mode === "plan" &&
+    ["write_file", "edit_file", "bash", "plan_exit"].includes(block.name)
+  ) {
+    return "BLOCKED: You are in plan mode (read-only). File edits are forbidden. Instead of attempting to edit files, output your analysis or plan directly as text. Do NOT retry this tool call.";
+  }
   const cmd: string = String(block.input.command ?? "");
   const filePath: string = String(block.input.path ?? "");
 
@@ -87,7 +95,7 @@ export async function checkToolPermission(block: {
             block.input,
             `Path outside workspace: ${result.reason}`,
           );
-          if (userResult === "deny") return "Permission denied by user";
+          if (userResult === "deny") return "User has DENIED this operation. Do NOT retry this tool call. Instead, explain what you were trying to do and ask the user for alternative instructions.";
         }
       }
     }
@@ -103,7 +111,7 @@ export async function checkToolPermission(block: {
         block.input,
         "Command requires approval",
       );
-      if (userResult === "deny") return "Permission denied by user";
+      if (userResult === "deny") return "User has DENIED this operation. Do NOT retry this tool call. Instead, explain what you were trying to do and ask the user for alternative instructions.";
     }
   }
 
@@ -115,7 +123,7 @@ export async function checkToolPermission(block: {
         block.input,
         `Writing outside workspace: ${result.reason}`,
       );
-      if (userResult === "deny") return "Permission denied by user";
+      if (userResult === "deny") return "User has DENIED this operation. Do NOT retry this tool call. Instead, explain what you were trying to do and ask the user for alternative instructions.";
     }
   }
 
@@ -127,7 +135,7 @@ export async function checkToolPermission(block: {
         block.input,
         `Reading outside workspace: ${result.reason}`,
       );
-      if (userResult === "deny") return "Permission denied by user";
+      if (userResult === "deny") return "User has DENIED this operation. Do NOT retry this tool call. Instead, explain what you were trying to do and ask the user for alternative instructions.";
     }
   }
 

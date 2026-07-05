@@ -11,6 +11,7 @@ import { compactDefinition } from "./compact.js";
 import { questionDefinition, runQuestion } from "./question.js";
 import { webfetchDefinition, runWebfetch } from "./webfetch.js";
 import { taskToolDefinitions, taskHandlers } from "./task_system.js";
+import { planEnterDefinition, planExitDefinition, runPlanEnter, runPlanExit } from "./plan.js";
 
 export const SUB_TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     bashDefinition,
@@ -23,6 +24,8 @@ export const SUB_TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     compactDefinition,
     questionDefinition,
     webfetchDefinition,
+    planEnterDefinition,
+    planExitDefinition,
 ];
 
 export const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
@@ -42,5 +45,14 @@ export const TOOL_HANDLERS: Record<string, ToolHandler> = {
     load_skill: runLoadSkill,
     question: runQuestion,
     webfetch: runWebfetch,
+    plan_enter: runPlanEnter,
+    plan_exit: runPlanExit,
     ...taskHandlers,
 };
+
+export const PLAN_BLOCKED_TOOLS = new Set([
+    "bash",
+    "write_file",
+    "edit_file",
+    "plan_exit",
+]);

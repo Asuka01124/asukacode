@@ -1,14 +1,20 @@
 import { useState, useCallback, useRef } from "react";
 import { theme } from "../theme";
-import type { CommandPaletteItem, InputTrigger, TriggerChar } from "../types";
+import type {
+  AgentMode,
+  CommandPaletteItem,
+  InputTrigger,
+} from "../types";
 import { InlineSelect, type InlineSelectItem } from "./InlineSelect";
 
 export interface InputBarPropsExtended {
   onSubmit: (value: string) => void;
+  onModeToggle?: () => void;
   placeholder?: string;
   focused?: boolean;
   busy?: boolean;
-  mode?: string;
+  mode?: AgentMode;
+  running?: boolean;
   model?: string;
   slashItems?: CommandPaletteItem[];
   mentionItems?: CommandPaletteItem[];
@@ -16,10 +22,12 @@ export interface InputBarPropsExtended {
 
 export function InputBar({
   onSubmit,
+  onModeToggle,
   placeholder = "",
   focused = false,
   busy = false,
-  mode = "",
+  mode = "build",
+  running = false,
   model = "",
   slashItems = [],
   mentionItems = [],
@@ -143,19 +151,22 @@ export function InputBar({
         width="100%"
         backgroundColor={theme.color.inputBg}
       >
-        <box width={1} backgroundColor={theme.color.blue} flexShrink={0} />
         <box
-          flexDirection="column"
-          flexGrow={1}
-          paddingLeft={2}
-          paddingRight={1}
-          paddingTop={1}
-        >
+          width={1}
+          backgroundColor={
+            mode === "plan" ? theme.color.yellow : theme.color.blue
+          }
+          flexShrink={0}
+        />
+        <box flexDirection="column" flexGrow={1}>
           <textarea
             ref={textareaRef}
             height="auto"
             minHeight={3}
             maxHeight={12}
+            marginLeft={2}
+            marginRight={1}
+            marginTop={1}
             focused={focused}
             placeholder={placeholder}
             wrapMode="word"
@@ -168,18 +179,30 @@ export function InputBar({
                 e.preventDefault();
                 handleSubmit();
               }
+              if (e.name === "tab" && e.shift) {
+                e.preventDefault();
+                onModeToggle?.();
+              }
             }}
           />
           <box
             flexDirection="row"
             justifyContent="space-between"
-            alignItems="flex-end"
-            height={2}
             flexShrink={0}
-            paddingTop={1}
+            marginLeft={2}
           >
-            <box flexDirection="row" gap={1}>
-              <text fg={theme.color.blue}>{mode}</text>
+            <box flexDirection="row" gap={1} height={2} alignItems="center">
+              <text
+                fg={mode === "plan" ? theme.color.yellow : theme.color.blue}
+              >
+                {mode}
+              </text>
+              {running && (
+                <>
+                  <text fg={theme.color.textMuted}>·</text>
+                  <text fg={theme.color.green}>running</text>
+                </>
+              )}
               <text fg={theme.color.textMuted}>·</text>
               <text fg={theme.color.textMuted}>{model}</text>
             </box>

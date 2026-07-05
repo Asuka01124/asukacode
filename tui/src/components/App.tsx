@@ -7,6 +7,7 @@ import type {
   SessionInfo,
   CommandPaletteItem,
   TodoItem,
+  AgentMode,
 } from "../types";
 import { Sidebar } from "./Sidebar";
 import { UserMessage } from "./UserMessage";
@@ -53,6 +54,10 @@ function parseSlashCommand(text: string): AppEvent | null {
       return { type: "cmd:icon" };
     case "help":
       return { type: "cmd:help" };
+    case "plan":
+      return { type: "cmd:plan" };
+    case "build":
+      return { type: "cmd:build" };
     default:
       return null;
   }
@@ -64,20 +69,23 @@ export interface AppProps {
   onNew?: () => void;
   onResume?: (sessionId: string) => void;
   onIconChange?: (icon: string) => void;
+  onModeChange?: (mode: AgentMode) => void;
   initialConversation?: ConversationEntry[];
   initialSessionName?: string;
+  initialMode?: AgentMode;
   model?: string;
   icon?: string;
 }
 
 export function App({
   onSubmit,
-  onStop,
   onNew,
   onResume,
   onIconChange,
+  onModeChange,
   initialConversation,
   initialSessionName,
+  initialMode,
   model,
   icon,
 }: AppProps) {
@@ -89,6 +97,7 @@ export function App({
   const [inputKey, setInputKey] = useState(0);
   const [thinkingMode, setThinkingMode] = useState<"show" | "hide">("hide");
   const [showToolDetails, setShowToolDetails] = useState(true);
+  const [mode, setMode] = useState<AgentMode>(initialMode ?? "build");
 
   const slashCommands: CommandPaletteItem[] = [
     { id: "new", label: "new", description: "开启新对话" },
@@ -110,6 +119,17 @@ export function App({
       id: "tool",
       label: "tool",
       description: showToolDetails ? "隐藏工具调用" : "显示工具调用",
+    },
+    {
+      id: "plan",
+      label: "plan",
+      description: mode === "plan" ? "已在计划模式" : "切换到计划模式 (只读)",
+    },
+    {
+      id: "build",
+      label: "build",
+      description:
+        mode === "build" ? "已在构建模式" : "切换到构建模式 (完整权限)",
     },
     { id: "help", label: "help", description: "查看帮助" },
   ];
@@ -154,6 +174,9 @@ export function App({
                 "/icon      — 切换侧栏图标",
                 "/thinking  — 切换思考过程显示",
                 "/tool      — 切换工具调用显示",
+                "/plan      — 切换到计划模式 (只读)",
+                "/build     — 切换到构建模式 (完整权限)",
+                "Shift+Tab  — 切换 build/plan 模式",
                 "/help      — 显示此帮助",
                 "Ctrl+C     — 双击退出",
               ],
@@ -272,6 +295,23 @@ export function App({
           });
           return;
         }
+        case "cmd:plan":
+          if (mode !== "plan") {
+            setMode("plan");
+            onModeChange?.("plan");
+          }
+          setInputKey((k) => k + 1);
+          return;
+        case "cmd:build":
+          if (mode !== "build") {
+            setMode("build");
+            onModeChange?.("build");
+          }
+          setInputKey((k) => k + 1);
+          return;
+        case "mode_changed":
+          setMode(ev.mode);
+          break;
         case "cmd:resume":
           if (ev.sessionId) {
             onResume?.(ev.sessionId);
@@ -406,17 +446,30 @@ export function App({
           });
           break;
         case "question": {
-          const { question, options, resolve } = ev.payload;
+          const { question, options, resolve, allowCustom } = ev.payload;
+          const hasCustom = allowCustom ?? false;
           setPicker({
+            question: question,
             items: options.map((o, i) => ({
               id: String(i),
               label: o.label,
               description: o.description,
             })),
+            showInput: hasCustom,
             onSelect: (id) => {
               setPicker(null);
               resolve(options[Number(id)]?.label ?? id);
             },
+            onCancel: () => {
+              setPicker(null);
+              resolve("(user cancelled)");
+            },
+            onInputSubmit: hasCustom
+              ? (value: string) => {
+                  setPicker(null);
+                  resolve(value);
+                }
+              : undefined,
           });
           return;
         }
@@ -430,10 +483,14 @@ export function App({
 
   const [permission, setPermission] = useState<PermissionPayload | null>(null);
   const [picker, setPicker] = useState<{
+    question?: string;
     items: PickerItem[];
     onSelect: (id: string) => void;
+    onCancel?: () => void;
     searchable?: boolean;
     onSearch?: (query: string) => void;
+    showInput?: boolean;
+    onInputSubmit?: (value: string) => void;
   } | null>(null);
   const [todos, setTodos] = useState<TodoItem[]>([]);
 
@@ -557,26 +614,35 @@ export function App({
 
           {picker && (
             <Picker
+              question={picker.question}
               items={picker.items}
               onSelect={(id) => {
                 picker.onSelect(id);
                 setInputKey((k) => k + 1);
               }}
               onCancel={() => {
-                setPicker(null);
+                picker.onCancel?.();
                 setInputKey((k) => k + 1);
               }}
               searchable={picker.searchable}
               onSearch={picker.onSearch}
+              showInput={picker.showInput}
+              onInputSubmit={picker.onInputSubmit}
             />
           )}
 
           <InputBar
             key={inputKey}
             onSubmit={handleSubmit}
+            onModeToggle={() => {
+              const newMode = mode === "build" ? "plan" : "build";
+              setMode(newMode);
+              onModeChange?.(newMode);
+            }}
             busy={running || !!picker}
             focused={inputFocused && !permission && !picker}
-            mode={running ? "running" : "idle"}
+            mode={mode}
+            running={running}
             model={model || "unknown"}
             placeholder=""
             slashItems={slashCommands}

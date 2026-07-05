@@ -1,3 +1,5 @@
+export type AgentMode = 'build' | 'plan'
+
 export type AppEvent =
 
   | { type: 'cmd:new' }
@@ -8,6 +10,8 @@ export type AppEvent =
   | { type: 'cmd:thinking' }
   | { type: 'cmd:tool' }
   | { type: 'cmd:icon' }
+  | { type: 'cmd:plan' }
+  | { type: 'cmd:build' }
   
   | { type: 'task_list'; tasks: Array<{ id: string; text: string; done: boolean }> }
 
@@ -19,6 +23,7 @@ export type AppEvent =
   | { type: 'tool_end'; sessionId: string; name: string; output: string; denied?: boolean }
   | { type: 'finished'; sessionId: string }
   | { type: 'state_changed'; sessionId: string; state: 'running' | 'idle' }
+  | { type: 'mode_changed'; mode: AgentMode }
   | { type: 'error'; sessionId: string; error: string }
   | { type: 'context_stats'; totalTokens: number; contextWindow: number; utilization: number }
   | { type: 'question'; payload: QuestionPayload }
@@ -29,6 +34,7 @@ export interface QuestionPayload {
   header: string
   options: { label: string; description: string }[]
   multiple: boolean
+  allowCustom?: boolean
   resolve: (answer: string) => void
 }
 

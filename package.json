@@ -1,6 +1,6 @@
 {
   "name": "asukacode",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A coding agent powered by AI",
   "type": "module",
   "scripts": {

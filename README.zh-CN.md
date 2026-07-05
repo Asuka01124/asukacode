@@ -52,6 +52,7 @@ AsukaCode 适合你，如果你想要：
 
 - 单轮多步工具执行，形成 `model → tool → model` 闭环
 - 全屏终端 UI（OpenTUI React），支持输入历史、transcript 滚动、slash 命令
+- **Build/Plan 模式**：`/plan` 进入只读规划模式，`/build` 返回构建模式，`Shift+Tab` 快速切换
 - 14 个内置工具：bash / 文件读写 / 精确编辑 / glob / grep / webfetch / 任务管理 / 技能加载 / 用户提问
 - 上下文利用率自动压缩：50% Micro → 70% Snip → 75% Budget → 85% Auto（LLM 摘要）
 - Token 发票优先使用 API 返回的实际 usage，精准计算利用率
@@ -126,6 +127,9 @@ bun run ./tui/src/entry.tsx
 - `/resume` — 加载历史会话（弹窗选择）
 - `/clear` — 清空当前对话
 - `/skill` — 查看可用技能
+- `/plan` — 切换到计划模式（只读，禁止编辑）
+- `/build` — 切换到构建模式（完整权限）
+- `Shift+Tab` — 快速切换 build/plan 模式
 - `/help` — 查看帮助
 - `Ctrl+C 双击` — 退出应用
 

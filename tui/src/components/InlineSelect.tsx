@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import { TextAttributes, ScrollBoxRenderable } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { theme } from "../theme";
@@ -24,6 +24,10 @@ export interface InlineSelectProps {
   highlightColor?: string;
 
   footer?: React.ReactNode;
+
+  showInput?: boolean;
+  inputPlaceholder?: string;
+  onInputSubmit?: (value: string) => void;
 }
 
 export function InlineSelect({
@@ -38,9 +42,15 @@ export function InlineSelect({
   maxHeight = 10,
   highlightColor = "#fab283",
   footer,
+  showInput = false,
+  inputPlaceholder = "请输入你的答案...",
+  onInputSubmit,
 }: InlineSelectProps) {
   const searchInputRef = useRef<any>(null);
   const scrollboxRef = useRef<ScrollBoxRenderable | null>(null);
+  const customInputRef = useRef<any>(null);
+  const [inputMode, setInputMode] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -56,22 +66,43 @@ export function InlineSelect({
     }
   }, [highlightIndex, items]);
 
+  useEffect(() => {
+    if (inputMode && customInputRef.current) {
+      customInputRef.current.focus?.();
+    }
+  }, [inputMode]);
+
   useKeyboard((key) => {
+    if (inputMode) {
+      if (key.name === "escape") {
+        setInputMode(false);
+        setInputValue("");
+        return;
+      }
+      return;
+    }
+
     if (key.name === "up") {
       onHighlightChange(
-        highlightIndex > 0 ? highlightIndex - 1 : items.length - 1,
+        highlightIndex > 0 ? highlightIndex - 1 : allItems.length - 1,
       );
       return;
     }
     if (key.name === "down") {
       onHighlightChange(
-        highlightIndex < items.length - 1 ? highlightIndex + 1 : 0,
+        highlightIndex < allItems.length - 1 ? highlightIndex + 1 : 0,
       );
       return;
     }
     if (key.name === "return") {
-      const item = items[highlightIndex];
-      if (item) onSelect(item);
+      const item = allItems[highlightIndex];
+      if (item) {
+        if (showInput && item.id === "custom") {
+          setInputMode(true);
+        } else {
+          onSelect(item);
+        }
+      }
       return;
     }
     if (key.name === "escape") {
@@ -79,6 +110,14 @@ export function InlineSelect({
       return;
     }
   });
+
+  const customItem: InlineSelectItem = {
+    id: "custom",
+    label: inputPlaceholder,
+    description: "输入自定义答案",
+  };
+
+  const allItems = showInput ? [...items, customItem] : items;
 
   return (
     <box flexDirection="column" flexShrink={0}>
@@ -112,7 +151,7 @@ export function InlineSelect({
           scrollY={true}
           scrollbarOptions={{ visible: false }}
         >
-          {items.map((item, i) => (
+          {allItems.map((item, i) => (
             <box
               key={item.id}
               id={item.id}
@@ -150,7 +189,33 @@ export function InlineSelect({
           ))}
         </scrollbox>
       </box>
-      {footer && (
+      {inputMode && (
+        <box backgroundColor={theme.color.inputBg} flexDirection="row">
+          <box width={1} backgroundColor={theme.color.yellow} flexShrink={0} />
+          <box flexGrow={1} paddingLeft={1} paddingRight={1} paddingTop={0} paddingBottom={0}>
+            <input
+              ref={customInputRef}
+              placeholder={inputPlaceholder}
+              onInput={(e) => setInputValue(e)}
+              onKeyDown={(e) => {
+                if (e.name === "return") {
+                  const value = customInputRef.current?.plainText ?? "";
+                  if (value.trim()) {
+                    onInputSubmit?.(value.trim());
+                    setInputMode(false);
+                    setInputValue("");
+                  }
+                }
+                if (e.name === "escape") {
+                  setInputMode(false);
+                  setInputValue("");
+                }
+              }}
+            />
+          </box>
+        </box>
+      )}
+      {footer && !inputMode && (
         <box backgroundColor={theme.color.inputBg}>
           <box width={1} backgroundColor={theme.color.text} flexShrink={0} />
           <box

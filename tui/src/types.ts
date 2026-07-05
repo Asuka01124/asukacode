@@ -1,3 +1,5 @@
+export type AgentMode = "build" | "plan"
+
 export type ToolCallStatus = "pending" | "running" | "completed" | "error" | "denied"
 
 export interface ThoughtStep {

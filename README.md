@@ -27,7 +27,7 @@ AsukaCode is a terminal coding agent built with Bun + TypeScript + OpenTUI. Comp
 
 ### Windows
 
-**PowerShell** (推荐):
+**PowerShell** (Recommended):
 ```powershell
 irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
 ```
@@ -68,6 +68,7 @@ Config saved to `~/.asukacode/config.json`.
 
 - Multi-step tool execution: `model → tool → model` loop
 - Fullscreen TUI (OpenTUI React) with scrollback, slash commands, sidebar
+- **Build/Plan mode**: `/plan` for read-only planning, `/build` for full access, `Shift+Tab` to toggle
 - 14 built-in tools: bash / file I/O / search / web / tasks / skills
 - 4-level context compaction: Micro → Snip → Budget → Auto
 - 3-tier permission system: denylist / destructive prompt / path sandbox
@@ -85,6 +86,9 @@ Config saved to `~/.asukacode/config.json`.
 | `/resume` | Load history |
 | `/clear` | Clear conversation |
 | `/skill` | Browse skills |
+| `/plan` | Switch to plan mode (read-only) |
+| `/build` | Switch to build mode (full access) |
+| `Shift+Tab` | Toggle build/plan mode |
 | `/help` | Show help |
 | `Ctrl+C ×2` | Exit |
 

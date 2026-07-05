@@ -1,11 +1,12 @@
 #!/usr/bin/env pwsh
 # AsukaCode GitHub Release Script
-# Usage: .\scripts\release.ps1 [-Version <version>] [-Draft]
+# Usage: .\scripts\release.ps1 [-Version <version>] [-Draft] [-Prerelease]
 
 param(
     [string]$Version,
     [switch]$Draft,
-    [switch]$Prerelease
+    [switch]$Prerelease,
+    [switch]$AutoNotes
 )
 
 $ErrorActionPreference = "Stop"
@@ -42,33 +43,36 @@ if ($Missing.Count -gt 0) {
     exit 1
 }
 
-# Build release notes
+# Generate release notes from git log
+$LastTag = git describe --tags --abbrev=0 HEAD~1 2>$null
+if ($LastTag) {
+    $GitLog = git log "$LastTag..HEAD" --pretty=format:"- %s" --no-merges
+} else {
+    $GitLog = git log --pretty=format:"- %s" --no-merges -20
+}
+
 $ReleaseNotes = @"
 ## AsukaCode v$Version
 
-### Features
-- Icon system with9switchable sidebar icons (/icon command)
-- Welcome page with ASUKACODE ASCII art
-- Checkbox-style task list with blinking animation
-- Fixed slash/mention trigger to only work at start of line
-- Refactored init wizard to use @clack/prompts
+### Changes
+$GitLog
 
 ### Installation
 
 **Windows (PowerShell):**
-```powershell
+``````powershell
 irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
-```
+``````
 
 **Windows (CMD):**
-```cmd
+``````cmd
 curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
-```
+``````
 
 **Linux x64:**
-```bash
+``````bash
 curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
-```
+``````
 
 ### Assets
 - ``asukacode-win32-x64.exe`` - Windows x64

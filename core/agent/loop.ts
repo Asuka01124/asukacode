@@ -1,5 +1,8 @@
 import OpenAI from "openai";
-import { TOOLS, TOOL_HANDLERS } from "../tools/tools.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { TOOLS, TOOL_HANDLERS, PLAN_BLOCKED_TOOLS } from "../tools/tools.js";
 import {
   runCompactionPipeline,
   reactiveCompact,
@@ -15,7 +18,14 @@ import {
 import { getDB, getMaxSeq, insertMessage } from "../database/database.js";
 import { checkToolPermission } from "../permission/permission.js";
 import { pipe } from "./events.js";
+import type { AgentMode } from "./events.js";
 import type { SystemContextSession } from "../systemContext/syscontext.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROMPT_DIR = path.join(__dirname, "prompt");
+
+const PLAN_PROMPT = fs.readFileSync(path.join(PROMPT_DIR, "plan.txt"), "utf-8");
+const BUILD_PROMPT = fs.readFileSync(path.join(PROMPT_DIR, "build.txt"), "utf-8");
 
 function nextSeq(db: ReturnType<typeof getDB>, sessionId: string): number {
   return getMaxSeq(db, sessionId) + 1;
@@ -27,6 +37,7 @@ export async function runLoop(
   model: string,
   systemPrompt: string,
   ctx: SystemContextSession,
+  mode: AgentMode = "build",
 ) {
   const db = getDB();
 
@@ -37,6 +48,17 @@ export async function runLoop(
   if (memoriesContent) fullPrompt = `${fullPrompt}\n\n${memoriesContent}`;
 
   while (true) {
+    const modePrompt = mode === "plan" ? PLAN_PROMPT : BUILD_PROMPT;
+
+    const availableTools = mode === "plan"
+      ? TOOLS.filter(t => {
+          if ("function" in t) {
+            return !PLAN_BLOCKED_TOOLS.has(t.function.name);
+          }
+          return true;
+        })
+      : TOOLS;
+
     let msgs = toModelMessages(sessionId);
     msgs.unshift({ role: "system", content: fullPrompt });
 
@@ -46,6 +68,8 @@ export async function runLoop(
     if (msgs[0]?.role !== "system") {
       msgs.unshift({ role: "system", content: fullPrompt });
     }
+
+    msgs.push({ role: "user", content: modePrompt });
 
     const contextUpdate = await ctx.getPrompt()
     if (contextUpdate) {
@@ -57,7 +81,7 @@ export async function runLoop(
       response = await client.chat.completions.create({
         model,
         messages: msgs,
-        tools: TOOLS,
+        tools: availableTools,
         reasoning_effort: "high",
         extra_body: { thinking: { type: "enabled" } },
       } as any);
@@ -129,7 +153,7 @@ export async function runLoop(
 
       pipe.run({ type: 'tool_start', sessionId, name, input });
 
-      const denied = await checkToolPermission({ name, input });
+      const denied = await checkToolPermission({ name, input, mode });
       let output: string;
 
       if (denied) {

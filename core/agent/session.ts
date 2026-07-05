@@ -3,6 +3,7 @@ import { getDB, insertMessage, getMessages, getMaxSeq } from "../database/databa
 import { runLoop } from "./loop.js";
 import { initSystemContext, SystemContextSession } from "../systemContext/syscontext.js";
 import { pipe } from "./events.js";
+import type { AgentMode } from "./events.js";
 import type { Config } from "../config/manager.js";
 import { setSubagentConfig } from "../tools/task.js";
 
@@ -16,6 +17,7 @@ export class AgentSession {
   private abortController: AbortController | null = null;
   private ctx = new SystemContextSession();
   private systemPrompt = "";
+  private currentMode: AgentMode = "build";
 
   constructor(config: Config, resumeSessionId?: string) {
     this.sessionId = resumeSessionId ?? `session_${Date.now()}`;
@@ -49,7 +51,7 @@ export class AgentSession {
     pipe.run({ type: 'state_changed', sessionId: this.sessionId, state: "running" });
 
     try {
-      await runLoop(this.sessionId, this.client, this.model, this.systemPrompt, this.ctx);
+      await runLoop(this.sessionId, this.client, this.model, this.systemPrompt, this.ctx, this.currentMode);
     } catch (err) {
       pipe.run({ type: 'error', sessionId: this.sessionId, error: String(err) });
     }
@@ -68,5 +70,15 @@ export class AgentSession {
 
   getMessages() {
     return getMessages(this.db, this.sessionId);
+  }
+
+  getMode(): AgentMode {
+    return this.currentMode;
+  }
+
+  switchMode(mode: AgentMode) {
+    if (this.currentMode === mode) return;
+    this.currentMode = mode;
+    pipe.run({ type: "mode_changed", mode });
   }
 }

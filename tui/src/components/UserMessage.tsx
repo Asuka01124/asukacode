@@ -12,7 +12,7 @@ export function UserMessage({ content }: UserMessageProps) {
       width="100%"
       backgroundColor={theme.color.inputBg}
     >
-      <box width={1} backgroundColor={theme.color.blue} flexShrink={0} />
+      <box width={1} backgroundColor={theme.color.pinkBright} flexShrink={0} />
       <box paddingLeft={2} paddingRight={2} paddingTop={1} paddingBottom={1}>
         <text fg={theme.color.text}>{content}</text>
       </box>

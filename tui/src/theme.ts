@@ -9,7 +9,7 @@ export const theme = {
     pinkBright: "#FFC0CB",
     purple: "#9d8cff",
     red: "#ef4566",
-    yellow: "#eab308",
+    yellow: "#f5a742",
     blue: "#60a5fa",
 
     appBg: "#0a0a0a",

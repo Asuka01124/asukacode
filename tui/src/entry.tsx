@@ -5,7 +5,7 @@ import { AgentSession } from "../../core/agent/session.js"
 import { loadOrInitConfig, saveConfig } from "../../core/config/manager.js"
 import { getDB } from "../../core/database/database.js"
 import { getMessages } from "../../core/database/messages.js"
-import type { ConversationEntry } from "./types.js"
+import type { AgentMode, ConversationEntry } from "./types.js"
 
 process.stdout.write("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l")
 
@@ -37,7 +37,10 @@ function cleanup() {
   process.exit(0)
 }
 
-process.on('exit', resetTerminal)
+process.on('exit', () => {
+  try { renderer.destroy() } catch {}
+  resetTerminal()
+})
 process.on('SIGINT', cleanup)
 process.on('SIGTERM', cleanup)
 process.on('uncaughtException', (err) => {
@@ -74,6 +77,7 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
       initialSessionName={sessionName}
       model={config.model}
       icon={config.icon}
+      initialMode={session.getMode()}
       onSubmit={(text) => session.ask(text)}
       onStop={() => session.stop()}
       onNew={() => {
@@ -89,6 +93,9 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
         config.icon = icon
         saveConfig(config)
         render()
+      }}
+      onModeChange={(mode: AgentMode) => {
+        session.switchMode(mode)
       }}
     />
   )
