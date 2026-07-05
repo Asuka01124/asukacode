@@ -1,7 +1,4 @@
 import OpenAI from "openai";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { TOOLS, TOOL_HANDLERS, PLAN_BLOCKED_TOOLS } from "../tools/tools.js";
 import {
   runCompactionPipeline,
@@ -21,11 +18,8 @@ import { pipe } from "./events.js";
 import type { AgentMode } from "./events.js";
 import type { SystemContextSession } from "../systemContext/syscontext.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROMPT_DIR = path.join(__dirname, "prompt");
-
-const PLAN_PROMPT = fs.readFileSync(path.join(PROMPT_DIR, "plan.txt"), "utf-8");
-const BUILD_PROMPT = fs.readFileSync(path.join(PROMPT_DIR, "build.txt"), "utf-8");
+import PLAN_PROMPT from "./prompt/plan.txt";
+import BUILD_PROMPT from "./prompt/build.txt";
 
 function nextSeq(db: ReturnType<typeof getDB>, sessionId: string): number {
   return getMaxSeq(db, sessionId) + 1;
