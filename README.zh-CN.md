@@ -71,18 +71,18 @@ GitHub Releases 提供预编译二进制。
 
 **PowerShell**（推荐）:
 ```powershell
-irm https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/Asuka01124/asukacode/master/scripts/install.ps1 | iex
 ```
 
 **CMD**:
 ```cmd
-curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
+curl -o install.ps1 https://raw.githubusercontent.com/Asuka01124/asukacode/master/scripts/install.ps1 && powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 ### Linux x64
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/master/scripts/install.sh | bash
 ```
 
 ### 其他平台
