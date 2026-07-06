@@ -11,7 +11,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$EntryFile = "./tui/src/entry.tsx"
+$EntryFile = "./tui/entry.tsx"
 $DistDir = "$ProjectRoot/dist"
 
 # Create dist directory
