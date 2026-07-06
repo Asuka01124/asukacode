@@ -350,14 +350,23 @@ export function App({
           return;
 
         case "assistant_delta":
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: "assistant_message",
-              id: crypto.randomUUID(),
-              lines: [ev.content],
-            },
-          ]);
+          setConversation((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.type === "assistant_message") {
+              const newLines = [...last.lines];
+              const lastLine = newLines.pop() || "";
+              newLines.push(lastLine + ev.content);
+              return [...prev.slice(0, -1), { ...last, lines: newLines }];
+            }
+            return [
+              ...prev,
+              {
+                type: "assistant_message",
+                id: crypto.randomUUID(),
+                lines: [ev.content],
+              },
+            ];
+          });
           break;
         case "thinking_start":
           setConversation((prev) => [

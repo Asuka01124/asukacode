@@ -5,7 +5,10 @@ import {
   reactiveCompact,
   toModelMessages,
 } from "../compact/compact.js";
-import { setMessageUsage, computeContextStats } from "../utils/token-estimator.js";
+import {
+  setMessageUsage,
+  computeContextStats,
+} from "../utils/token-estimator.js";
 import { runCompact } from "../tools/compact.js";
 import {
   loadMemories,
@@ -23,6 +26,28 @@ import BUILD_PROMPT from "./prompt/build.txt";
 
 function nextSeq(db: ReturnType<typeof getDB>, sessionId: string): number {
   return getMaxSeq(db, sessionId) + 1;
+}
+
+function mergeToolCalls(
+  existing: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[],
+  delta: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall[],
+): void {
+  for (const dt of delta) {
+    const idx = dt.index ?? 0;
+    if (!existing[idx]) {
+      existing[idx] = {
+        id: dt.id ?? "",
+        type: "function",
+        function: { name: "", arguments: "" },
+      };
+    }
+    if (dt.id) existing[idx].id = dt.id;
+    if ("function" in existing[idx]) {
+      if (dt.function?.name) existing[idx].function.name += dt.function.name;
+      if (dt.function?.arguments)
+        existing[idx].function.arguments += dt.function.arguments;
+    }
+  }
 }
 
 export async function runLoop(
@@ -44,14 +69,15 @@ export async function runLoop(
   while (true) {
     const modePrompt = mode === "plan" ? PLAN_PROMPT : BUILD_PROMPT;
 
-    const availableTools = mode === "plan"
-      ? TOOLS.filter(t => {
-          if ("function" in t) {
-            return !PLAN_BLOCKED_TOOLS.has(t.function.name);
-          }
-          return true;
-        })
-      : TOOLS;
+    const availableTools =
+      mode === "plan"
+        ? TOOLS.filter((t) => {
+            if ("function" in t) {
+              return !PLAN_BLOCKED_TOOLS.has(t.function.name);
+            }
+            return true;
+          })
+        : TOOLS;
 
     let msgs = toModelMessages(sessionId);
     msgs.unshift({ role: "system", content: fullPrompt });
@@ -65,74 +91,134 @@ export async function runLoop(
 
     msgs.push({ role: "user", content: modePrompt });
 
-    const contextUpdate = await ctx.getPrompt()
+    const contextUpdate = await ctx.getPrompt();
     if (contextUpdate) {
-      msgs.push({ role: "user", content: `[Context Update]\n\n${contextUpdate}` })
+      msgs.push({
+        role: "user",
+        content: `[Context Update]\n\n${contextUpdate}`,
+      });
     }
 
-    let response: OpenAI.Chat.Completions.ChatCompletion;
+    // Stream API call
+    let fullContent = "";
+    let reasoningContent = "";
+    const toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[] =
+      [];
+    let usageTokens: {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
+    } | null = null;
+
     try {
-      response = await client.chat.completions.create({
+      const stream = (await client.chat.completions.create({
         model,
         messages: msgs,
         tools: availableTools,
+        stream: true,
         reasoning_effort: "high",
         extra_body: { thinking: { type: "enabled" } },
-      } as any);
+      } as any)) as unknown as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
+
+      let thinkingStarted = false;
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+
+        // Handle reasoning content (thinking)
+        if ((delta as any)?.reasoning_content) {
+          const rc = (delta as any).reasoning_content as string;
+          reasoningContent += rc;
+          if (!thinkingStarted) {
+            pipe.run({ type: "thinking_start", sessionId });
+            thinkingStarted = true;
+          }
+          pipe.run({ type: "thinking_delta", sessionId, content: rc });
+        }
+
+        // Handle regular content
+        if (delta?.content) {
+          fullContent += delta.content;
+          pipe.run({
+            type: "assistant_delta",
+            sessionId,
+            content: delta.content,
+          });
+        }
+
+        // Handle tool calls
+        if (delta?.tool_calls) {
+          mergeToolCalls(toolCalls, delta.tool_calls);
+        }
+
+        // Handle usage
+        if (chunk.usage) {
+          usageTokens = {
+            prompt_tokens: chunk.usage.prompt_tokens,
+            completion_tokens: chunk.usage.completion_tokens,
+            total_tokens: chunk.usage.total_tokens,
+          };
+        }
+      }
+
+      if (thinkingStarted) {
+        pipe.run({ type: "thinking_end", sessionId });
+      }
     } catch (err) {
       if (isPromptTooLong(err)) {
         msgs = await reactiveCompact(sessionId, msgs, client, model);
         continue;
       }
-      pipe.run({ type: 'error', sessionId, error: String(err) });
+      pipe.run({ type: "error", sessionId, error: String(err) });
       throw err;
     }
 
-    const assistant = response.choices[0].message;
-    const content = typeof assistant.content === "string" ? assistant.content : null;
-    const reasoningContent = (assistant as any).reasoning_content ?? null;
+    // Build assistant message for DB
+    const toolCallsJSON =
+      toolCalls.length > 0 ? JSON.stringify(toolCalls) : null;
 
-    if (reasoningContent) {
-      pipe.run({ type: 'thinking_start', sessionId });
-      pipe.run({ type: 'thinking_delta', sessionId, content: reasoningContent });
-      pipe.run({ type: 'thinking_end', sessionId });
-    }
+    const assistant: OpenAI.Chat.Completions.ChatCompletionMessage = {
+      role: "assistant",
+      content: fullContent || null,
+      tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+      refusal: null,
+    };
 
-    if (content) {
-      pipe.run({ type: 'assistant_delta', sessionId, content });
-    }
-
-    const toolCallsJSON = assistant.tool_calls
-      ? JSON.stringify(assistant.tool_calls)
-      : null;
-
-    const usageTotalTokens = response.usage?.total_tokens ?? null
-    insertMessage(db, sessionId, nextSeq(db, sessionId), "assistant", content, null, toolCallsJSON, usageTotalTokens);
-    if (usageTotalTokens != null) {
+    insertMessage(
+      db,
+      sessionId,
+      nextSeq(db, sessionId),
+      "assistant",
+      fullContent || null,
+      null,
+      toolCallsJSON,
+      usageTokens?.total_tokens ?? null,
+    );
+    if (usageTokens) {
       setMessageUsage(assistant, {
-        prompt_tokens: response.usage!.prompt_tokens,
-        completion_tokens: response.usage!.completion_tokens,
-        total_tokens: usageTotalTokens,
-      })
+        prompt_tokens: usageTokens.prompt_tokens,
+        completion_tokens: usageTokens.completion_tokens,
+        total_tokens: usageTokens.total_tokens,
+      });
     }
     msgs.push(assistant);
 
-    const ctxStats = computeContextStats(msgs, model)
+    const ctxStats = computeContextStats(msgs, model);
     pipe.run({
-      type: 'context_stats',
+      type: "context_stats",
       totalTokens: ctxStats.totalTokens,
       contextWindow: ctxStats.contextWindow,
       utilization: ctxStats.utilization,
-    })
+    });
 
-    if (!assistant.tool_calls?.length) {
+    if (toolCalls.length === 0) {
       await extractMemories(preCompress, client, model);
       await consolidateMemories(client, model);
-      pipe.run({ type: 'finished', sessionId });
+      pipe.run({ type: "finished", sessionId });
       return;
     }
 
-    for (const call of assistant.tool_calls) {
+    for (const call of toolCalls) {
       if (call.type !== "function") continue;
 
       const name = call.function.name;
@@ -140,26 +226,40 @@ export async function runLoop(
 
       if (name === "compact") {
         const output = await runCompact(input, sessionId, msgs, client, model);
-        insertMessage(db, sessionId, nextSeq(db, sessionId), "tool", output, call.id);
+        insertMessage(
+          db,
+          sessionId,
+          nextSeq(db, sessionId),
+          "tool",
+          output,
+          call.id,
+        );
         msgs.push({ role: "tool", tool_call_id: call.id, content: output });
         break;
       }
 
-      pipe.run({ type: 'tool_start', sessionId, name, input });
+      pipe.run({ type: "tool_start", sessionId, name, input });
 
       const denied = await checkToolPermission({ name, input, mode });
       let output: string;
 
       if (denied) {
         output = denied;
-        pipe.run({ type: 'tool_end', sessionId, name, output, denied: true });
+        pipe.run({ type: "tool_end", sessionId, name, output, denied: true });
       } else {
         const handler = TOOL_HANDLERS[name];
         output = handler ? await handler(input) : `Unknown tool: ${name}`;
-        pipe.run({ type: 'tool_end', sessionId, name, output });
+        pipe.run({ type: "tool_end", sessionId, name, output });
       }
 
-      insertMessage(db, sessionId, nextSeq(db, sessionId), "tool", output, call.id);
+      insertMessage(
+        db,
+        sessionId,
+        nextSeq(db, sessionId),
+        "tool",
+        output,
+        call.id,
+      );
       msgs.push({ role: "tool", tool_call_id: call.id, content: output });
     }
   }
