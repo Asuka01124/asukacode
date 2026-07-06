@@ -97,6 +97,7 @@ function render(initialConversation?: ConversationEntry[], sessionName?: string)
       onModeChange={(mode: AgentMode) => {
         session.switchMode(mode)
       }}
+      onCompact={() => session.compact()}
     />
   )
 }

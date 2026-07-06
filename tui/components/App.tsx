@@ -52,12 +52,12 @@ function parseSlashCommand(text: string): AppEvent | null {
       return { type: "cmd:tool" };
     case "icon":
       return { type: "cmd:icon" };
-    case "help":
-      return { type: "cmd:help" };
     case "plan":
       return { type: "cmd:plan" };
     case "build":
       return { type: "cmd:build" };
+    case "compact":
+      return { type: "cmd:compact" };
     default:
       return null;
   }
@@ -70,6 +70,7 @@ export interface AppProps {
   onResume?: (sessionId: string) => void;
   onIconChange?: (icon: string) => void;
   onModeChange?: (mode: AgentMode) => void;
+  onCompact?: () => Promise<{ before: number; after: number }>;
   initialConversation?: ConversationEntry[];
   initialSessionName?: string;
   initialMode?: AgentMode;
@@ -83,6 +84,7 @@ export function App({
   onResume,
   onIconChange,
   onModeChange,
+  onCompact,
   initialConversation,
   initialSessionName,
   initialMode,
@@ -131,8 +133,8 @@ export function App({
       description:
         mode === "build" ? "已在构建模式" : "切换到构建模式 (完整权限)",
     },
-    { id: "help", label: "help", description: "查看帮助" },
-  ];
+    { id: "compact", label: "compact", description: "压缩上下文" },
+  ].sort((a, b) => a.id.localeCompare(b.id));
 
   const [context, setContext] = useState<ContextStats>({
     tokens: 0,
@@ -158,31 +160,6 @@ export function App({
           setInputKey((k) => k + 1);
           setRunning(false);
           onNew?.();
-          return;
-        case "cmd:help":
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: "assistant_message",
-              id: crypto.randomUUID(),
-              heading: "帮助",
-              lines: [
-                "/new       — 开启新对话",
-                "/clear     — 清空当前对话",
-                "/resume    — 加载历史对话",
-                "/skill     — 查看可用技能",
-                "/icon      — 切换侧栏图标",
-                "/thinking  — 切换思考过程显示",
-                "/tool      — 切换工具调用显示",
-                "/plan      — 切换到计划模式 (只读)",
-                "/build     — 切换到构建模式 (完整权限)",
-                "Shift+Tab  — 切换 build/plan 模式",
-                "/help      — 显示此帮助",
-                "Ctrl+C     — 双击退出",
-              ],
-            },
-          ]);
-          setInputKey((k) => k + 1);
           return;
         case "cmd:skill": {
           const skills = [...SKILL_REGISTRY.values()];
@@ -309,6 +286,44 @@ export function App({
           }
           setInputKey((k) => k + 1);
           return;
+        case "cmd:compact": {
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: "assistant_message",
+              id: crypto.randomUUID(),
+              lines: ["[Compact] 正在压缩上下文..."],
+            },
+          ]);
+          setRunning(true);
+          onCompact?.()
+            .then(({ before, after }) => {
+              setConversation((prev) => [
+                ...prev,
+                {
+                  type: "assistant_message",
+                  id: crypto.randomUUID(),
+                  lines: [
+                    `[Compact] ${before.toLocaleString()} → ${after.toLocaleString()} tokens`,
+                  ],
+                },
+              ]);
+            })
+            .catch((err) => {
+              setConversation((prev) => [
+                ...prev,
+                {
+                  type: "assistant_message",
+                  id: crypto.randomUUID(),
+                  lines: [`[Compact] 压缩失败: ${err.message}`],
+                },
+              ]);
+            })
+            .finally(() => {
+              setRunning(false);
+            });
+          return;
+        }
         case "mode_changed":
           setMode(ev.mode);
           break;

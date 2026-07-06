@@ -88,8 +88,8 @@ Config saved to `~/.asukacode/config.json`.
 | `/skill` | Browse skills |
 | `/plan` | Switch to plan mode (read-only) |
 | `/build` | Switch to build mode (full access) |
+| `/compact` | Compact context |
 | `Shift+Tab` | Toggle build/plan mode |
-| `/help` | Show help |
 | `Ctrl+C ×2` | Exit |
 
 ## Develop

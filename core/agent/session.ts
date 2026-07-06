@@ -81,4 +81,21 @@ export class AgentSession {
     this.currentMode = mode;
     pipe.run({ type: "mode_changed", mode });
   }
+
+  async compact(): Promise<{ before: number; after: number }> {
+    const { compactHistory } = await import("../compact/auto.js");
+    const { toModelMessages, computeContextStats } = await import("../compact/index.js");
+
+    const msgs = toModelMessages(this.sessionId);
+    const beforeStats = computeContextStats(msgs, this.model);
+    const before = beforeStats.totalTokens;
+
+    await compactHistory(this.sessionId, msgs, this.client, this.model, beforeStats);
+
+    const rebuilt = toModelMessages(this.sessionId);
+    const afterStats = computeContextStats(rebuilt, this.model);
+    const after = afterStats.totalTokens;
+
+    return { before, after };
+  }
 }

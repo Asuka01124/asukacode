@@ -4,7 +4,6 @@ export type AppEvent =
 
   | { type: 'cmd:new' }
   | { type: 'cmd:clear' }
-  | { type: 'cmd:help' }
   | { type: 'cmd:resume'; sessionId?: string }
   | { type: 'cmd:skill' }
   | { type: 'cmd:thinking' }
@@ -12,6 +11,7 @@ export type AppEvent =
   | { type: 'cmd:icon' }
   | { type: 'cmd:plan' }
   | { type: 'cmd:build' }
+  | { type: 'cmd:compact' }
   
   | { type: 'task_list'; tasks: Array<{ id: string; text: string; done: boolean }> }
 

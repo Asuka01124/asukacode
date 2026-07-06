@@ -29,6 +29,8 @@ export function ContextPanel({ stats }: ContextPanelProps) {
         <box width={`${percent}%` as `${number}%`} backgroundColor={theme.color.green} />
         <box flexGrow={1} backgroundColor={theme.color.progressTrack} />
       </box>
+      <box height={1} />
+      <text fg={theme.color.textMuted}>v{theme.appVersion}</text>
     </box>
   )
 }
