@@ -11,9 +11,9 @@ Write-Host "Installing AsukaCode..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
 if ($Version -eq "latest") {
-  $Url = "https://github.com/$Repo/releases/latest/download/asukacode-win32-x64.exe"
+  $Url = "https://github.com/$Repo/releases/latest/download/asukacode-win-x64.exe"
 } else {
-  $Url = "https://github.com/$Repo/releases/download/$Version/asukacode-win32-x64.exe"
+  $Url = "https://github.com/$Repo/releases/download/$Version/asukacode-win-x64.exe"
 }
 
 Write-Host "Downloading $Url ..."

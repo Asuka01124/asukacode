@@ -1,9 +1,9 @@
 $InstallDir = "$env:LOCALAPPDATA\asukacode\bin"
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
-$Src = Join-Path $PSScriptRoot "..\asukacode-win32-x64.exe"
+$Src = Join-Path $PSScriptRoot "..\asukacode-win-x64.exe"
 if (-not (Test-Path $Src)) {
-  Write-Host "Error: asukacode-win32-x64.exe not found. Run 'bun run compile' first." -ForegroundColor Red
+  Write-Host "Error: asukacode-win-x64.exe not found. Run 'bun run compile' first." -ForegroundColor Red
   exit 1
 }
 
