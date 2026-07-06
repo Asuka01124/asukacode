@@ -10,7 +10,7 @@ import {
   getToolCallIds,
   getToolCallId,
 } from "./types.js"
-import { type ContextStats, estimateMessagesTokens } from "../utils/token-estimator.js"
+import { type ContextStats, estimateMessagesTokens } from "./token-estimator.js"
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam
 

@@ -4,13 +4,8 @@ import { snipCompact } from "./snip.js";
 import { microCompact } from "./micro.js";
 import { compactHistory } from "./auto.js";
 import { toModelMessages } from "./to_model.js";
-import { computeContextStats, estimateMessagesTokens } from "../utils/token-estimator.js";
-import { getModelContextWindow } from "../utils/model-context.js";
-
-export { reactiveCompact, isContextOverflowError } from "./reactive.js";
-export { toModelMessages } from "./to_model.js";
-export { computeContextStats } from "../utils/token-estimator.js";
-export type { ContextStats } from "../utils/token-estimator.js";
+import { computeContextStats, estimateMessagesTokens } from "./token-estimator.js";
+import { getModelContextWindow } from "../config/model-context.js";
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 

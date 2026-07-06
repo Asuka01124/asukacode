@@ -1,6 +1,6 @@
 import { Database as DatabaseSync } from "bun:sqlite"
 import fs from "node:fs"
-import { getProjectDBPath, getProjectDir } from "../config/project.js"
+import { getProjectDBPath, getProjectDir } from "../config/index.js"
 import { initMessagesTable } from "./messages.js"
 
 let db: DatabaseSync | null = null

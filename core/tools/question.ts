@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import z from "zod";
-import { pipe, type QuestionPayload } from "../agent/events.js";
+import { pipe, type QuestionPayload } from "../agent/index.js";
 
 const QuestionArgs = z.object({
   questions: z.array(

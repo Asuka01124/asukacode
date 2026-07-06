@@ -23,9 +23,8 @@ Write-Host "Creating release v$Version..." -ForegroundColor Cyan
 
 # Check if binaries exist
 $Binaries = @(
-    "asukacode-win32-x64.exe",
-    "asukacode-linux-x64",
-    "asukacode-linux-arm64"
+    "asukacode-win-x64.exe",
+    "asukacode-linux-x64"
 )
 
 $Missing = @()
@@ -75,9 +74,8 @@ curl -fsSL https://raw.githubusercontent.com/Asuka01124/asukacode/main/scripts/i
 ``````
 
 ### Assets
-- ``asukacode-win32-x64.exe`` - Windows x64
+- ``asukacode-win-x64.exe`` - Windows x64
 - ``asukacode-linux-x64`` - Linux x64
-- ``asukacode-linux-arm64`` - Linux ARM64
 "@
 
 # Create release

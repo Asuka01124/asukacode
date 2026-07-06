@@ -3,7 +3,7 @@
 # Usage: .\scripts\build.ps1 [-Target <platform>] [-All]
 
 param(
-    [ValidateSet("win-x64", "linux-x64", "linux-arm64", "all")]
+    [ValidateSet("win-x64", "linux-x64", "all")]
     [string]$Target = "win-x64",
     [switch]$All,
     [switch]$NoIcon
@@ -11,7 +11,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$EntryFile = "./tui/src/entry.tsx"
+$EntryFile = "./tui/entry.tsx"
 $DistDir = "$ProjectRoot/dist"
 
 # Create dist directory
@@ -63,12 +63,10 @@ $Success = $true
 if ($All -or $Target -eq "all") {
     $Success = $Success -and (Build-Binary "win-x64" "bun-windows-x64" ".exe")
     $Success = $Success -and (Build-Binary "linux-x64" "bun-linux-x64")
-    $Success = $Success -and (Build-Binary "linux-arm64" "bun-linux-arm64")
 } else {
     switch ($Target) {
         "win-x64"     { Build-Binary "win-x64" "bun-windows-x64" ".exe" }
         "linux-x64"   { Build-Binary "linux-x64" "bun-linux-x64" }
-        "linux-arm64" { Build-Binary "linux-arm64" "bun-linux-arm64" }
     }
 }
 

@@ -41,7 +41,7 @@ asukacode/
 
 ```bash
 # 开发模式（JIT 即时执行）
-bun run ./tui/src/entry.tsx
+bun run ./tui/entry.tsx
 
 # TypeScript 类型检查
 npx tsc --noEmit
@@ -100,9 +100,8 @@ npm run compile:all
 ```
 
 产物：
-- `asukacode-win32-x64.exe` — Windows x64
+- `asukacode-win-x64.exe` — Windows x64
 - `asukacode-linux-x64` — Linux x64
-- `asukacode-darwin-arm64` — macOS ARM
 
 ## 发布
 
@@ -110,7 +109,7 @@ npm run compile:all
 # 1. 打版本号
 npm version patch          # 1.0.0 → 1.0.1
 
-# 2. 编译三平台二进制
+# 2. 编译两平台二进制
 npm run compile:all
 
 # 3. 推送到 npm

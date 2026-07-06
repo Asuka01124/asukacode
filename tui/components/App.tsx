@@ -17,15 +17,15 @@ import { ToolCallMessage } from "./ToolCallMessage";
 import { PermissionDialog } from "./PermissionDialog";
 import { InputBar } from "./InputBar";
 import { Picker, type PickerItem } from "./Picker";
-import { pipe } from "../../../core/agent/events.js";
+import { pipe } from "../../core/agent/events.js";
 import type {
   AppEvent,
   PermissionPayload,
   QuestionPayload,
-} from "../../../core/agent/events.js";
-import { getDB } from "../../../core/database/database.js";
-import { listSessions } from "../../../core/database/messages.js";
-import { SKILL_REGISTRY } from "../../../core/skills/skills.js";
+} from "../../core/agent/events.js";
+import { getDB } from "../../core/database/database.js";
+import { listSessions } from "../../core/database/messages.js";
+import { SKILL_REGISTRY } from "../../core/skills/skills.js";
 import { ICON_NAMES, ICONS } from "../icons/index.js";
 
 const SIDEBAR_MIN_TERM_WIDTH = 80;
@@ -350,14 +350,23 @@ export function App({
           return;
 
         case "assistant_delta":
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: "assistant_message",
-              id: crypto.randomUUID(),
-              lines: [ev.content],
-            },
-          ]);
+          setConversation((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.type === "assistant_message") {
+              const newLines = [...last.lines];
+              const lastLine = newLines.pop() || "";
+              newLines.push(lastLine + ev.content);
+              return [...prev.slice(0, -1), { ...last, lines: newLines }];
+            }
+            return [
+              ...prev,
+              {
+                type: "assistant_message",
+                id: crypto.randomUUID(),
+                lines: [ev.content],
+              },
+            ];
+          });
           break;
         case "thinking_start":
           setConversation((prev) => [

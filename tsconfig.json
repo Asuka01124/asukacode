@@ -5,20 +5,12 @@
     "moduleResolution": "nodenext",
     "strict": true,
     "esModuleInterop": true,
+    "allowArbitraryExtensions": true,
     "outDir": "dist",
     "rootDir": ".",
     "declaration": true,
     "types": ["node", "bun"],
     "skipLibCheck": true
   },
-  "include": [
-    "*.ts",
-    "core/config/*.ts",
-    "core/tools/*.ts",
-    "core/compact/*.ts",
-    "core/memory/*.ts",
-    "core/skills/*.ts",
-    "core/systemContext/*.ts",
-    "core/database/*.ts"
-  ]
+  "include": ["*.ts", "*.d.ts", "core/**/*.ts", "core/**/*.d.ts"]
 }

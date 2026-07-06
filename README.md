@@ -96,7 +96,7 @@ Config saved to `~/.asukacode/config.json`.
 
 ```bash
 bun install
-bun run ./tui/src/entry.tsx
+bun run ./tui/entry.tsx
 ```
 
 ## Build
@@ -104,7 +104,6 @@ bun run ./tui/src/entry.tsx
 ```bash
 bun run compile               # Current platform
 bun run compile:linux-x64     # Linux
-bun run compile:darwin-arm64  # macOS Apple Silicon
 ```
 
 ## License

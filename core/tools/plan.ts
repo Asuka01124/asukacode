@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { pipe } from "../agent/events.js";
+import { pipe } from "../agent/index.js";
 
 export const planEnterDefinition: OpenAI.Chat.Completions.ChatCompletionTool = {
   type: "function",
@@ -35,9 +35,10 @@ export const planExitDefinition: OpenAI.Chat.Completions.ChatCompletionTool = {
 };
 
 export function runPlanEnter(
-  input: Record<string, unknown>,
+  input: unknown,
 ): Promise<string> {
-  const reason = input.reason ? String(input.reason) : "Planning phase";
+  const args = input as Record<string, unknown>;
+  const reason = args.reason ? String(args.reason) : "Planning phase";
   pipe.run({ type: "cmd:plan" });
   return Promise.resolve(`Switched to plan mode. ${reason}`);
 }

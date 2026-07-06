@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { theme } from "../theme";
-import type { PermissionPayload } from "../../../core/agent/events.js";
+import type { PermissionPayload } from "../../core/agent/events.js";
 
 interface PermissionDialogProps {
   payload: PermissionPayload;

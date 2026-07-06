@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { getGlobalMemoryPath } from "../config/manager.js";
+import { getGlobalMemoryPath } from "../config/index.js";
 
 export function readGlobalMemory(): string {
   const memoryPath = getGlobalMemoryPath();

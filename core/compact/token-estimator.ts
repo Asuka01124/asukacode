@@ -1,5 +1,5 @@
 import type OpenAI from "openai"
-import { getModelContextWindow } from "./model-context.js"
+import { getModelContextWindow } from "../config/model-context.js"
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam
 

@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import type OpenAI from "openai";
-import { getProjectDir } from "../config/project.js";
-import { pipe } from "../agent/events.js";
+import { getProjectDir } from "../config/index.js";
+import { pipe } from "../agent/index.js";
 
 interface Task {
     id: string;
@@ -268,11 +268,11 @@ export const taskToolDefinitions: OpenAI.Chat.Completions.ChatCompletionTool[] =
         { task_id: { type: "string", description: "The task ID to complete" } }, ["task_id"]),
 ];
 
-export const taskHandlers: Record<string, (args: any) => Promise<string>> = {
-    todowrite: (a) => todowrite(a),
-    create_task: (a) => createTask(a),
+export const taskHandlers: Record<string, (args: unknown) => Promise<string>> = {
+    todowrite: (a) => todowrite(a as { todos: TodoItem[] }),
+    create_task: (a) => createTask(a as { subject: string; description?: string; blockedBy?: string[] }),
     list_tasks: () => listAllTasks(),
-    get_task: (a) => getTask(a.task_id),
-    claim_task: (a) => claimTask(a.task_id),
-    complete_task: (a) => completeTask(a.task_id),
+    get_task: (a) => getTask((a as { task_id: string }).task_id),
+    claim_task: (a) => claimTask((a as { task_id: string }).task_id),
+    complete_task: (a) => completeTask((a as { task_id: string }).task_id),
 };

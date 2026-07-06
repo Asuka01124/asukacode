@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import { getDB, getMessages } from "../database/database.js";
 import type { MessageRow } from "../database/database.js";
-import { setMessageUsage } from "../utils/token-estimator.js";
+import { setMessageUsage } from "./token-estimator.js";
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
