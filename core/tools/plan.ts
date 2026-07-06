@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { pipe } from "../agent/events.js";
+import { pipe } from "../agent/index.js";
 
 export const planEnterDefinition: OpenAI.Chat.Completions.ChatCompletionTool = {
   type: "function",

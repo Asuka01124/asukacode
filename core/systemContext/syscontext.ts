@@ -4,12 +4,6 @@ import { registerInstructions } from "./instructions.js"
 import { registerSkillGuidance } from "./skills.js"
 import { registerMemoryGuidance } from "./memory.js"
 
-export { register, unregister, loadAll, listKeys, clear } from "./registry.js"
-export { registerBuiltins } from "./builtins.js"
-export { registerInstructions } from "./instructions.js"
-export { registerSkillGuidance } from "./skills.js"
-export { registerMemoryGuidance } from "./memory.js"
-
 export type ContextKey = string
 
 export const UNAVAILABLE = Symbol("Unavailable")

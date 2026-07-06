@@ -1,5 +1,4 @@
-import path from "node:path";
-import { getProjectMemoryDir, getProjectMemoryIndexPath } from "../config/project.js";
+import { getProjectMemoryDir, getProjectMemoryIndexPath } from "../config/index.js";
 
 export function getMemoryDir(): string {
   return getProjectMemoryDir();

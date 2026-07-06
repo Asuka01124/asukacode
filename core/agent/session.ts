@@ -1,10 +1,10 @@
 import OpenAI from "openai";
 import { getDB, insertMessage, getMessages, getMaxSeq } from "../database/database.js";
 import { runLoop } from "./loop.js";
-import { initSystemContext, SystemContextSession } from "../systemContext/syscontext.js";
+import { initSystemContext, SystemContextSession } from "../systemContext/index.js";
 import { pipe } from "./events.js";
 import type { AgentMode } from "./events.js";
-import type { Config } from "../config/manager.js";
+import type { Config } from "../config/index.js";
 import { setSubagentConfig } from "../tools/task.js";
 
 let initialized = false;

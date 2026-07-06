@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import { getDB, markSummarized } from "../database/database.js";
 import { AUTO_COMPACT_UTILIZATION } from "./types.js";
-import type { ContextStats } from "../utils/token-estimator.js";
+import type { ContextStats } from "./token-estimator.js";
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 

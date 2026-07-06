@@ -118,7 +118,7 @@ asukacode
 git clone https://github.com/Asuka01124/asukacode
 cd asukacode
 bun install
-bun run ./tui/src/entry.tsx
+bun run ./tui/entry.tsx
 ```
 
 ## 常用入口
@@ -187,7 +187,7 @@ bun run compile:darwin-arm64  # macOS ARM
 ## 开发
 
 ```bash
-bun run ./tui/src/entry.tsx   # 开发模式
+bun run ./tui/entry.tsx   # 开发模式
 npx tsc --noEmit               # 类型检查
 ```
 

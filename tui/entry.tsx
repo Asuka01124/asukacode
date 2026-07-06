@@ -1,10 +1,10 @@
 import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"
 import { App } from "./components/App.js"
-import { AgentSession } from "../../core/agent/session.js"
-import { loadOrInitConfig, saveConfig } from "../../core/config/manager.js"
-import { getDB } from "../../core/database/database.js"
-import { getMessages } from "../../core/database/messages.js"
+import { AgentSession } from "../core/agent/session.js"
+import { loadOrInitConfig, saveConfig } from "../core/config/config.js"
+import { getDB } from "../core/database/database.js"
+import { getMessages } from "../core/database/messages.js"
 import type { AgentMode, ConversationEntry } from "./types.js"
 
 process.stdout.write("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l")

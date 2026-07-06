@@ -1,8 +1,7 @@
 import fs from "node:fs"
 import { make } from "./syscontext.js"
 import { register } from "./registry.js"
-import { readMemoryIndex } from "../memory/storage.js"
-import { getMemoryDir } from "../memory/types.js"
+import { readMemoryIndex, getMemoryDir } from "../memory/index.js"
 
 interface MemoryData {
   index: string

@@ -1,6 +1,5 @@
 import path from "node:path";
-import { pipe, PermissionPayload } from "../agent/events.js";
-import type { AgentMode } from "../agent/events.js";
+import { pipe, type PermissionPayload, type AgentMode } from "../agent/index.js";
 import { match } from "./wildcard.js";
 import { parse, collectPaths, initParser } from "./shell-parser.js";
 import { checkPath } from "./path-check.js";

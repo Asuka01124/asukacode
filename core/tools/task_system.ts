@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import type OpenAI from "openai";
-import { getProjectDir } from "../config/project.js";
-import { pipe } from "../agent/events.js";
+import { getProjectDir } from "../config/index.js";
+import { pipe } from "../agent/index.js";
 
 interface Task {
     id: string;

@@ -13,7 +13,7 @@ import {
   MINIMAX_MODELS,
   MIMO_MODELS,
   type ModelContextRule,
-} from "../utils/model-context.js";
+} from "./model-context.js";
 
 export const ConfigSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),

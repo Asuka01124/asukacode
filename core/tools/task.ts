@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import z from "zod";
 import { SUB_TOOLS, TOOL_HANDLERS } from "./tools.js";
-import { checkToolPermission } from "../permission/permission.js";
+import { checkToolPermission } from "../permission/index.js";
 
 const TaskArgs = z.object({
     description: z.string(),

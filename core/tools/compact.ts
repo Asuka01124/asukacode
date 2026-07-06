@@ -1,6 +1,5 @@
 import { compactHistory } from "../compact/auto.js";
-import { toModelMessages } from "../compact/to_model.js";
-import { computeContextStats } from "../utils/token-estimator.js";
+import { toModelMessages, computeContextStats } from "../compact/index.js";
 import type OpenAI from "openai";
 
 export const compactDefinition: OpenAI.Chat.Completions.ChatCompletionTool = {

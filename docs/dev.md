@@ -41,7 +41,7 @@ asukacode/
 
 ```bash
 # 开发模式（JIT 即时执行）
-bun run ./tui/src/entry.tsx
+bun run ./tui/entry.tsx
 
 # TypeScript 类型检查
 npx tsc --noEmit

@@ -96,7 +96,7 @@ Config saved to `~/.asukacode/config.json`.
 
 ```bash
 bun install
-bun run ./tui/src/entry.tsx
+bun run ./tui/entry.tsx
 ```
 
 ## Build

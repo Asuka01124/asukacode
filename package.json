@@ -4,9 +4,9 @@
   "description": "A coding agent powered by AI",
   "type": "module",
   "scripts": {
-    "compile": "bun build --compile ./tui/src/entry.tsx --outfile asukacode-win32-x64 && node scripts/set-icon.mjs ./asukacode-win32-x64.exe ./docs/icon.ico",
-    "compile:linux-x64": "bun build --compile --target=bun-linux-x64 ./tui/src/entry.tsx --outfile asukacode-linux-x64",
-    "compile:linux-arm64": "bun build --compile --target=bun-linux-arm64 ./tui/src/entry.tsx --outfile asukacode-linux-arm64",
+    "compile": "bun build --compile ./tui/entry.tsx --outfile asukacode-win32-x64 && node scripts/set-icon.mjs ./asukacode-win32-x64.exe ./docs/icon.ico",
+    "compile:linux-x64": "bun build --compile --target=bun-linux-x64 ./tui/entry.tsx --outfile asukacode-linux-x64",
+    "compile:linux-arm64": "bun build --compile --target=bun-linux-arm64 ./tui/entry.tsx --outfile asukacode-linux-arm64",
     "build": "pwsh scripts/build.ps1 -Target win-x64",
     "build:all": "pwsh scripts/build.ps1 -All",
     "release": "pwsh scripts/release.ps1"

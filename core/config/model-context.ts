@@ -1,14 +1,14 @@
 export type ModelContextWindow = {
-  contextWindow: number
-  outputReserve: number
-  effectiveInput: number
-}
+  contextWindow: number;
+  outputReserve: number;
+  effectiveInput: number;
+};
 
 export type ModelContextRule = {
-  patterns: readonly string[]
-  contextWindow: number
-  outputReserve: number
-}
+  patterns: readonly string[];
+  contextWindow: number;
+  outputReserve: number;
+};
 
 export const DEEPSEEK_MODELS = [
   {
@@ -21,7 +21,7 @@ export const DEEPSEEK_MODELS = [
     contextWindow: 1_048_576,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const CLAUDE_MODELS = [
   {
@@ -44,7 +44,7 @@ export const CLAUDE_MODELS = [
     contextWindow: 200_000,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const OPENAI_MODELS = [
   {
@@ -72,7 +72,7 @@ export const OPENAI_MODELS = [
     contextWindow: 1_048_576,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const QWEN_MODELS = [
   {
@@ -95,7 +95,7 @@ export const QWEN_MODELS = [
     contextWindow: 1_000_000,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const KIMI_MODELS = [
   {
@@ -113,7 +113,7 @@ export const KIMI_MODELS = [
     contextWindow: 262_144,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const GLM_MODELS = [
   {
@@ -131,7 +131,7 @@ export const GLM_MODELS = [
     contextWindow: 200_000,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const MINIMAX_MODELS = [
   {
@@ -144,7 +144,7 @@ export const MINIMAX_MODELS = [
     contextWindow: 204_800,
     outputReserve: 8_000,
   },
-] as const
+] as const;
 
 export const MIMO_MODELS = [
   {
@@ -157,12 +157,7 @@ export const MIMO_MODELS = [
     contextWindow: 1_048_576,
     outputReserve: 8_000,
   },
-  {
-    patterns: ["mimo-v2-flash"],
-    contextWindow: 262_144,
-    outputReserve: 8_000,
-  },
-] as const
+] as const;
 
 export const ALL_RULES: readonly ModelContextRule[] = [
   ...DEEPSEEK_MODELS,
@@ -173,29 +168,30 @@ export const ALL_RULES: readonly ModelContextRule[] = [
   ...GLM_MODELS,
   ...MINIMAX_MODELS,
   ...MIMO_MODELS,
-]
+];
 
 const UNKNOWN_MODEL_CONTEXT: ModelContextRule = {
   patterns: [],
   contextWindow: 128_000,
   outputReserve: 8_000,
-}
+};
 
 export function getModelContextWindow(model: string): ModelContextWindow {
-  const normalized = model.trim().toLowerCase()
+  const normalized = model.trim().toLowerCase();
   for (const rule of ALL_RULES) {
     if (rule.patterns.some((pattern) => normalized.includes(pattern))) {
       return {
         contextWindow: rule.contextWindow,
         outputReserve: rule.outputReserve,
         effectiveInput: rule.contextWindow - rule.outputReserve,
-      }
+      };
     }
   }
 
   return {
     contextWindow: UNKNOWN_MODEL_CONTEXT.contextWindow,
     outputReserve: UNKNOWN_MODEL_CONTEXT.outputReserve,
-    effectiveInput: UNKNOWN_MODEL_CONTEXT.contextWindow - UNKNOWN_MODEL_CONTEXT.outputReserve,
-  }
+    effectiveInput:
+      UNKNOWN_MODEL_CONTEXT.contextWindow - UNKNOWN_MODEL_CONTEXT.outputReserve,
+  };
 }

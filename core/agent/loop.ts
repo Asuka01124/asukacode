@@ -1,25 +1,22 @@
 import OpenAI from "openai";
-import { TOOLS, TOOL_HANDLERS, PLAN_BLOCKED_TOOLS } from "../tools/tools.js";
+import { TOOLS, TOOL_HANDLERS, PLAN_BLOCKED_TOOLS, runCompact } from "../tools/index.js";
 import {
   runCompactionPipeline,
   reactiveCompact,
   toModelMessages,
-} from "../compact/compact.js";
-import {
   setMessageUsage,
   computeContextStats,
-} from "../utils/token-estimator.js";
-import { runCompact } from "../tools/compact.js";
+} from "../compact/index.js";
 import {
   loadMemories,
   extractMemories,
   consolidateMemories,
-} from "../memory/memory.js";
+} from "../memory/index.js";
 import { getDB, getMaxSeq, insertMessage } from "../database/database.js";
-import { checkToolPermission } from "../permission/permission.js";
+import { checkToolPermission } from "../permission/index.js";
 import { pipe } from "./events.js";
 import type { AgentMode } from "./events.js";
-import type { SystemContextSession } from "../systemContext/syscontext.js";
+import type { SystemContextSession } from "../systemContext/index.js";
 
 import PLAN_PROMPT from "./prompt/plan.txt";
 import BUILD_PROMPT from "./prompt/build.txt";

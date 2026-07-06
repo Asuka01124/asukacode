@@ -17,15 +17,15 @@ import { ToolCallMessage } from "./ToolCallMessage";
 import { PermissionDialog } from "./PermissionDialog";
 import { InputBar } from "./InputBar";
 import { Picker, type PickerItem } from "./Picker";
-import { pipe } from "../../../core/agent/events.js";
+import { pipe } from "../../core/agent/events.js";
 import type {
   AppEvent,
   PermissionPayload,
   QuestionPayload,
-} from "../../../core/agent/events.js";
-import { getDB } from "../../../core/database/database.js";
-import { listSessions } from "../../../core/database/messages.js";
-import { SKILL_REGISTRY } from "../../../core/skills/skills.js";
+} from "../../core/agent/events.js";
+import { getDB } from "../../core/database/database.js";
+import { listSessions } from "../../core/database/messages.js";
+import { SKILL_REGISTRY } from "../../core/skills/skills.js";
 import { ICON_NAMES, ICONS } from "../icons/index.js";
 
 const SIDEBAR_MIN_TERM_WIDTH = 80;
