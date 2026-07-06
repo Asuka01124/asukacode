@@ -71,7 +71,7 @@ Config saved to `~/.asukacode/config.json`.
 - **Build/Plan mode**: `/plan` for read-only planning, `/build` for full access, `Shift+Tab` to toggle
 - 14 built-in tools: bash / file I/O / search / web / tasks / skills
 - 4-level context compaction: Micro → Snip → Budget → Auto
-- 3-tier permission system: denylist / destructive prompt / path sandbox
+- Capability-based permission system: risk classification, sub-command rules, shell metacharacter detection, sensitive file protection
 - Long-term memory: auto-extract, consolidate, inject per-turn
 - Skill system: load domain expertise via `SKILL.md`
 - Incremental System Prompt updates: detect changes, send deltas only

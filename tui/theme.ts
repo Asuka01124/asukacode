@@ -21,6 +21,17 @@ export const theme = {
     paletteHighlight: "#fab283",
 
     progressTrack: "#161b22",
+
+    // Markdown colors
+    heading1: "#FFD700",    // 金色
+    heading2: "#87CEEB",    // 天蓝色
+    heading3: "#98FB98",    // 浅绿色
+    code: "#00FF00",        // 亮绿色
+    codeBg: "#1a1a1a",      // 深灰色背景
+    emphasis: "#FF69B4",    // 粉色
+    link: "#00BFFF",        // 蓝色
+    hr: "#666666",          // 灰色
+    border: "#444444",      // 边框灰色
   },
   space: {
     xs: 1,

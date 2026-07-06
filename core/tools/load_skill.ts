@@ -11,8 +11,9 @@ export const loadSkillDefinition: OpenAI.Chat.Completions.ChatCompletionTool = {
     function: {
         name: "load_skill",
         description:
-            "Load a specialized skill when the task matches one of the available skills. " +
-            "The skill's full instructions and resources are injected into the conversation. " +
+            "Load a specialized skill by name. " +
+            "You may ONLY call this tool when the user explicitly mentions a skill name in their message. " +
+            "Do NOT proactively load skills based on task matching or guessing. " +
             "The skill name must match one from the available skills list in the system context.",
         parameters: {
             type: "object",

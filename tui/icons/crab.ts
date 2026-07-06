@@ -9,41 +9,17 @@ export const crab: IconDefinition = {
   description: "小螃蟹",
   rows: [
     [
-      { color: BODY, text: "    ▄█▀▀▀█▄    " },
-    ],
-    [
-      { color: BODY, text: "  ▄██████████▄  " },
-    ],
-    [
-      { color: BODY, text: " ▐████████████▌ " },
-    ],
-    [
-      { color: BODY, text: "▐███" },
+      { color: BODY, text: " ▐" },
       { color: EYE, text: "▛███▜" },
-      { color: BODY, text: "███" },
-      { color: EYE, text: "▛███▜" },
-      { color: BODY, text: "██▌" },
+      { color: BODY, text: "▌" },
     ],
     [
-      { color: BODY, text: "▐████████████████▌" },
+      { color: BODY, text: "▝▜" },
+      { color: EYE, text: "█████" },
+      { color: BODY, text: "▛▘" },
     ],
     [
-      { color: BODY, text: "▐████████████████▌" },
-    ],
-    [
-      { color: BODY, text: " ▐██████████████▌ " },
-    ],
-    [
-      { color: BODY, text: "  ▝█▄▄▄▄▄▄▄▄█▘  " },
-    ],
-    [
-      { color: BODY, text: " ▗▟█▙      ▟█▙▖ " },
-    ],
-    [
-      { color: BODY, text: "▐██▌        ▐██▌" },
-    ],
-    [
-      { color: BODY, text: "▝██▘        ▝██▘" },
+      { color: BODY, text: "  ▘▘ ▝▝  " },
     ],
   ],
 }
