@@ -37,7 +37,7 @@ export class MCPManager {
 
       for (const tool of tools) {
         toolRegistry.register({
-          name: `${name}.${tool.name}`,
+          name: `${name}_${tool.name}`,
           description: tool.description || "",
           parameters: tool.inputSchema as Record<string, unknown>,
           metadata: {
