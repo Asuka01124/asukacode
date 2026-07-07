@@ -226,29 +226,9 @@ export function App({
         }
         case "cmd:thinking":
           setThinkingMode((prev) => (prev === "hide" ? "show" : "hide"));
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: "assistant_message",
-              id: crypto.randomUUID(),
-              lines: [
-                thinkingMode === "hide" ? "思考过程已显示" : "思考过程已隐藏",
-              ],
-            },
-          ]);
-          setInputKey((k) => k + 1);
           return;
         case "cmd:tool":
           setShowToolDetails((prev) => !prev);
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: "assistant_message",
-              id: crypto.randomUUID(),
-              lines: [showToolDetails ? "工具调用已隐藏" : "工具调用已显示"],
-            },
-          ]);
-          setInputKey((k) => k + 1);
           return;
         case "cmd:icon": {
           const allIcons = ICON_NAMES.map((name) => ({
@@ -571,7 +551,7 @@ export function App({
             {
               type: "thinking",
               id: crypto.randomUUID(),
-              lines: [],
+              lines: [""],
             },
           ]);
           break;
@@ -579,10 +559,14 @@ export function App({
           setConversation((prev) => {
             const last = prev[prev.length - 1];
             if (last?.type === "thinking") {
-              return [
-                ...prev.slice(0, -1),
-                { ...last, lines: [...last.lines, ev.content] },
-              ];
+              const lines = [...last.lines];
+              const parts = ev.content.split("\n");
+              lines[lines.length - 1] =
+                (lines[lines.length - 1] ?? "") + parts[0];
+              for (let i = 1; i < parts.length; i++) {
+                lines.push(parts[i]);
+              }
+              return [...prev.slice(0, -1), { ...last, lines }];
             }
             return prev;
           });
@@ -717,6 +701,7 @@ export function App({
     const cmd = parseSlashCommand(value);
     if (cmd) {
       pipe.run(cmd);
+      setInputKey((k) => k + 1);
       return;
     }
 

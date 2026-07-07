@@ -43,3 +43,4 @@ asukacode-darwin-*
 
 # project data (generated at runtime)
 .asukacode
+*.bun-build
