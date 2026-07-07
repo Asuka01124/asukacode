@@ -54,9 +54,12 @@ AsukaCode 适合你，如果你想要：
 - 全屏终端 UI（OpenTUI React），支持输入历史、transcript 滚动、slash 命令
 - **Build/Plan 模式**：`/plan` 进入只读规划模式，`/build` 返回构建模式，`Shift+Tab` 快速切换
 - 14 个内置工具：bash / 文件读写 / 精确编辑 / glob / grep / webfetch / 任务管理 / 技能加载 / 用户提问
+- **MCP 支持**：通过 `/mcp` 命令连接、断开、管理 MCP 服务器，自动注册工具
+- **粘贴块**：粘贴超过 5 行时自动折叠为 `[pasted ~N lines]`，提交时展开完整内容
 - 上下文利用率自动压缩：50% Micro → 70% Snip → 75% Budget → 85% Auto（LLM 摘要）
 - Token 发票优先使用 API 返回的实际 usage，精准计算利用率
 - 三级权限拦截：denylist 硬拒绝 / 破坏性操作弹窗 / 越界写入弹窗
+- **MCP 工具权限**：按分类（read/write/execute/network）自动审批，read 类自动通过，其他需确认
 - 长期记忆：自动从对话提取，超阈值时合并去重，每轮注入相关记忆
 - 技能系统：通过 `SKILL.md` 按需加载专业知识
 - System Prompt 代数式增量更新：比较快照，仅发送变化部分
@@ -129,6 +132,8 @@ bun run ./tui/entry.tsx
 - `/skill` — 查看可用技能
 - `/plan` — 切换到计划模式（只读，禁止编辑）
 - `/build` — 切换到构建模式（完整权限）
+- `/mcp` — 管理 MCP 服务器（连接/断开/查看工具）
+- `/compact` — 压缩上下文
 - `Shift+Tab` — 快速切换 build/plan 模式
 - `/help` — 查看帮助
 - `Ctrl+C 双击` — 退出应用
@@ -151,12 +156,14 @@ asukacode/
 │   ├── compact/      # 四级上下文压缩
 │   ├── config/       # 配置管理 + 安装向导
 │   ├── database/     # SQLite 消息持久化
+│   ├── mcp/          # MCP 客户端 + 服务器管理
 │   ├── memory/       # 长期记忆管理
+│   ├── paste/        # 粘贴块管理
 │   ├── permission/   # 三级权限控制
 │   ├── recovery/     # API 错误恢复
 │   ├── skills/       # 技能系统
 │   ├── systemContext/# System Prompt 增量引擎
-│   ├── tools/        # 14 个内置工具
+│   ├── tools/        # 14 个内置工具 + 工具注册表
 │   └── utils/        # token 估算 / 模型窗口
 ├── scripts/          # 安装脚本 + 图标注入
 ├── tui/              # 终端 UI (React / OpenTUI)
