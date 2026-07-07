@@ -5,6 +5,8 @@ import { AgentSession } from "../core/agent/session.js"
 import { loadOrInitConfig, saveConfig } from "../core/config/config.js"
 import { getDB } from "../core/database/database.js"
 import { getMessages } from "../core/database/messages.js"
+import { registerBuiltinTools } from "../core/tools/index.js"
+import { loadMCPConfig, mcpManager, startConfigWatcher } from "../core/mcp/index.js"
 import type { AgentMode, ConversationEntry } from "./types.js"
 
 process.stdout.write("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l")
@@ -14,6 +16,12 @@ if (!config) {
   console.error("Configuration is required. Exiting.")
   process.exit(1)
 }
+
+registerBuiltinTools()
+
+loadMCPConfig()
+mcpManager.loadConfig()
+startConfigWatcher()
 
 let session = new AgentSession(config)
 

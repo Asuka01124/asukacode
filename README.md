@@ -70,8 +70,10 @@ Config saved to `~/.asukacode/config.json`.
 - Fullscreen TUI (OpenTUI React) with scrollback, slash commands, sidebar
 - **Build/Plan mode**: `/plan` for read-only planning, `/build` for full access, `Shift+Tab` to toggle
 - 14 built-in tools: bash / file I/O / search / web / tasks / skills
+- **MCP support**: connect to MCP servers, manage tools via `/mcp` command
+- **Paste block**: large paste (>5 lines) auto-collapses to `[pasted ~N lines]` with extmark virtual text
 - 4-level context compaction: Micro → Snip → Budget → Auto
-- Capability-based permission system: risk classification, sub-command rules, shell metacharacter detection, sensitive file protection
+- Capability-based permission system: risk classification, sub-command rules, shell metacharacter detection, sensitive file protection, MCP tool categorization
 - Long-term memory: auto-extract, consolidate, inject per-turn
 - Skill system: load domain expertise via `SKILL.md`
 - Incremental System Prompt updates: detect changes, send deltas only
@@ -89,6 +91,7 @@ Config saved to `~/.asukacode/config.json`.
 | `/plan` | Switch to plan mode (read-only) |
 | `/build` | Switch to build mode (full access) |
 | `/compact` | Compact context |
+| `/mcp` | Manage MCP servers |
 | `Shift+Tab` | Toggle build/plan mode |
 | `Ctrl+C ×2` | Exit |
 

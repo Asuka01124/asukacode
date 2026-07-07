@@ -27,6 +27,7 @@ import { getDB } from "../../core/database/database.js";
 import { listSessions } from "../../core/database/messages.js";
 import { SKILL_REGISTRY } from "../../core/skills/skills.js";
 import { ICON_NAMES, ICONS } from "../icons/index.js";
+import { mcpManager, reloadMCP } from "../../core/mcp/index.js";
 
 const SIDEBAR_MIN_TERM_WIDTH = 80;
 
@@ -58,6 +59,8 @@ function parseSlashCommand(text: string): AppEvent | null {
       return { type: "cmd:build" };
     case "compact":
       return { type: "cmd:compact" };
+    case "mcp":
+      return { type: "cmd:mcp" };
     default:
       return null;
   }
@@ -134,6 +137,7 @@ export function App({
         mode === "build" ? "已在构建模式" : "切换到构建模式 (完整权限)",
     },
     { id: "compact", label: "compact", description: "压缩上下文" },
+    { id: "mcp", label: "mcp", description: "管理 MCP 服务器" },
   ].sort((a, b) => a.id.localeCompare(b.id));
 
   const [context, setContext] = useState<ContextStats>({
@@ -215,6 +219,7 @@ export function App({
                   onSubmit(text);
                 }, 0);
               },
+              onCancel: () => setPicker(null),
             });
           }
           return;
@@ -269,6 +274,7 @@ export function App({
               onIconChange?.(id);
               setInputKey((k) => k + 1);
             },
+            onCancel: () => setPicker(null),
           });
           return;
         }
@@ -324,6 +330,181 @@ export function App({
             });
           return;
         }
+        case "cmd:mcp": {
+          const servers = mcpManager.getStatus();
+          if (servers.length === 0) {
+            setConversation((prev) => [
+              ...prev,
+              {
+                type: "assistant_message",
+                id: crypto.randomUUID(),
+                lines: [
+                  "没有找到 MCP 服务器配置",
+                  "请在 ~/.asukacode/mcp.json 中添加配置",
+                  "",
+                  '示例: { "servers": { "filesystem": { "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem"] } } }',
+                ],
+              },
+            ]);
+            setInputKey((k) => k + 1);
+          } else {
+            const items = servers.map((s) => ({
+              id: s.name,
+              label: s.name,
+              description: s.connected
+                ? `已连接 (${s.tools.length} 个工具)`
+                : s.error
+                  ? `错误: ${s.error}`
+                  : "未连接",
+            }));
+            setPicker({
+              items,
+              searchable: true,
+              onSearch: (query) => {
+                const filtered = query
+                  ? items.filter(
+                      (i) =>
+                        i.label
+                          .toLowerCase()
+                          .includes(query.toLowerCase()) ||
+                        i.description
+                          .toLowerCase()
+                          .includes(query.toLowerCase()),
+                    )
+                  : items;
+                setPicker((prev) =>
+                  prev ? { ...prev, items: filtered } : null,
+                );
+              },
+              onSelect: (id) => {
+                setPicker(null);
+                setTimeout(() => {
+                  const server = servers.find((s) => s.name === id);
+                  if (!server) return;
+
+                  const actions = [
+                    ...(server.connected
+                      ? [
+                          {
+                            id: "disconnect",
+                            label: "断开",
+                            description: "断开 MCP 服务器",
+                          },
+                        ]
+                      : [
+                          {
+                            id: "connect",
+                            label: "连接",
+                            description: "连接到 MCP 服务器",
+                          },
+                        ]),
+                    {
+                      id: "tools",
+                      label: "工具列表",
+                      description: "查看提供的工具",
+                    },
+                    {
+                      id: "reload",
+                      label: "重新加载",
+                      description: "重新加载配置文件",
+                    },
+                  ];
+
+                  setPicker({
+                    items: actions,
+                    onSelect: async (action) => {
+                      setPicker(null);
+                      setConversation((prev) => [
+                        ...prev,
+                        {
+                          type: "user_message",
+                          id: crypto.randomUUID(),
+                          content: `/mcp ${id} ${action}`,
+                        },
+                      ]);
+
+                      try {
+                        switch (action) {
+                          case "connect":
+                            await mcpManager.connect(id, server.config);
+                            const afterConnect = mcpManager.getServer(id);
+                            setConversation((prev) => [
+                              ...prev,
+                              {
+                                type: "assistant_message",
+                                id: crypto.randomUUID(),
+                                lines: [
+                                  `[MCP] ${id}: ${afterConnect?.connected ? `已连接 (${afterConnect.tools.length} 个工具)` : `连接失败: ${afterConnect?.error}`}`,
+                                ],
+                              },
+                            ]);
+                            break;
+                          case "disconnect":
+                            await mcpManager.disconnect(id);
+                            setConversation((prev) => [
+                              ...prev,
+                              {
+                                type: "assistant_message",
+                                id: crypto.randomUUID(),
+                                lines: [`[MCP] ${id}: 已断开`],
+                              },
+                            ]);
+                            break;
+                          case "tools":
+                            const tools = mcpManager.getServer(id)?.tools || [];
+                            setConversation((prev) => [
+                              ...prev,
+                              {
+                                type: "assistant_message",
+                                id: crypto.randomUUID(),
+                                lines:
+                                  tools.length > 0
+                                    ? [
+                                        `[MCP] ${id} 工具列表：`,
+                                        ...tools.map(
+                                          (t) =>
+                                            `  - ${t.name}: ${t.description || ""}`,
+                                        ),
+                                      ]
+                                    : [`[MCP] ${id}: 未连接或无工具`],
+                              },
+                            ]);
+                            break;
+                          case "reload":
+                            await reloadMCP();
+                            setConversation((prev) => [
+                              ...prev,
+                              {
+                                type: "assistant_message",
+                                id: crypto.randomUUID(),
+                                lines: ["[MCP] 配置已重新加载"],
+                              },
+                            ]);
+                            break;
+                        }
+                      } catch (err) {
+                        setConversation((prev) => [
+                          ...prev,
+                          {
+                            type: "assistant_message",
+                            id: crypto.randomUUID(),
+                            lines: [
+                              `[MCP] 操作失败: ${err instanceof Error ? err.message : String(err)}`,
+                            ],
+                          },
+                        ]);
+                      }
+                      setInputKey((k) => k + 1);
+                    },
+                    onCancel: () => setPicker(null),
+                  });
+                }, 0);
+              },
+              onCancel: () => setPicker(null),
+            });
+          }
+          return;
+        }
         case "mode_changed":
           setMode(ev.mode);
           break;
@@ -360,6 +541,7 @@ export function App({
                 onResume?.(id);
                 setPicker(null);
               },
+              onCancel: () => setPicker(null),
             });
           }
           return;

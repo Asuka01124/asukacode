@@ -1,5 +1,6 @@
 import OpenAI from "openai";
-import { TOOLS, TOOL_HANDLERS, PLAN_BLOCKED_TOOLS, runCompact } from "../tools/index.js";
+import { PLAN_BLOCKED_TOOLS, runCompact } from "../tools/index.js";
+import { toolRegistry } from "../tools/registry.js";
 import {
   runCompactionPipeline,
   reactiveCompact,
@@ -66,15 +67,16 @@ export async function runLoop(
   while (true) {
     const modePrompt = mode === "plan" ? PLAN_PROMPT : BUILD_PROMPT;
 
+    const allTools = toolRegistry.getTools();
     const availableTools =
       mode === "plan"
-        ? TOOLS.filter((t) => {
+        ? allTools.filter((t) => {
             if ("function" in t) {
               return !PLAN_BLOCKED_TOOLS.has(t.function.name);
             }
             return true;
           })
-        : TOOLS;
+        : allTools;
 
     let msgs = toModelMessages(sessionId);
     msgs.unshift({ role: "system", content: fullPrompt });
@@ -244,8 +246,8 @@ export async function runLoop(
         output = denied;
         pipe.run({ type: "tool_end", sessionId, name, output, denied: true });
       } else {
-        const handler = TOOL_HANDLERS[name];
-        output = handler ? await handler(input) : `Unknown tool: ${name}`;
+        const tool = toolRegistry.getHandler(name);
+        output = tool ? await tool.execute(input) : `Unknown tool: ${name}`;
         pipe.run({ type: "tool_end", sessionId, name, output });
       }
 

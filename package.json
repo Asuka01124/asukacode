@@ -1,6 +1,6 @@
 {
   "name": "asukacode",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "A coding agent powered by AI",
   "type": "module",
   "scripts": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@opentui/core": "^0.4.1",
     "@opentui/core-darwin-arm64": "^0.4.2",
     "@opentui/core-linux-arm64": "^0.4.2",

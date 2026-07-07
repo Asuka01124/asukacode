@@ -1,11 +1,16 @@
 import { useState, useCallback, useRef } from "react";
+import { decodePasteBytes, type PasteEvent } from "@opentui/core";
 import { theme } from "../theme";
-import type {
-  AgentMode,
-  CommandPaletteItem,
-  InputTrigger,
-} from "../types";
+import type { AgentMode, CommandPaletteItem, InputTrigger } from "../types";
 import { InlineSelect, type InlineSelectItem } from "./InlineSelect";
+import {
+  addPasteBlock,
+  expandPasteBlocks,
+  clearPasteBlocks,
+  makePlaceholder,
+} from "../../core/paste/paste-blocks";
+
+const MAX_VISIBLE_LINES = 5;
 
 export interface InputBarPropsExtended {
   onSubmit: (value: string) => void;
@@ -102,9 +107,13 @@ export function InputBar({
     }
     const content = textareaRef.current?.plainText ?? "";
     if (!content.trim()) return;
-    onSubmit(content);
+
+    const expanded = expandPasteBlocks(content, textareaRef.current);
+    onSubmit(expanded);
+
     textareaRef.current?.setText("");
     textRef.current = "";
+    clearPasteBlocks();
     setTrigger(null);
   }, [
     busy,
@@ -170,6 +179,35 @@ export function InputBar({
             focused={focused}
             placeholder={placeholder}
             wrapMode="word"
+            onPaste={(event: PasteEvent) => {
+              const text = decodePasteBytes(event.bytes)
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n");
+              const lines = text.split("\n");
+              event.preventDefault();
+              if (lines.length <= MAX_VISIBLE_LINES) {
+                textareaRef.current?.insertText(text);
+              } else {
+                const placeholder = makePlaceholder(lines.length);
+                const startOffset =
+                  textareaRef.current?.cursorOffset ?? 0;
+                textareaRef.current?.insertText(placeholder + " ");
+                const typeId =
+                  textareaRef.current?.extmarks?.registerType?.(
+                    "paste-block",
+                  );
+                if (typeId != null) {
+                  const extmarkId =
+                    textareaRef.current.extmarks.create({
+                      start: startOffset,
+                      end: startOffset + placeholder.length,
+                      virtual: true,
+                      typeId,
+                    });
+                  addPasteBlock(text, lines.length, extmarkId);
+                }
+              }
+            }}
             onContentChange={() => {
               updateTrigger(textareaRef.current?.plainText ?? "");
             }}

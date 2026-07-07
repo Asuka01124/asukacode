@@ -11,6 +11,7 @@ import {
   SUB_COMMAND_RULES,
   SENSITIVE_READ_PATTERNS,
 } from "./rules.js";
+import { toolRegistry } from "../tools/registry.js";
 
 const WORKDIR = process.cwd();
 
@@ -188,6 +189,23 @@ export async function checkToolPermission(block: {
     ["write_file", "edit_file", "bash", "plan_exit"].includes(block.name)
   ) {
     return "BLOCKED: You are in plan mode (read-only). File edits are forbidden. Instead of attempting to edit files, output your analysis or plan directly as text. Do NOT retry this tool call.";
+  }
+
+  const metadata = toolRegistry.getMetadata(block.name);
+  if (metadata?.source === "mcp") {
+    const category = metadata.category || "write";
+    switch (category) {
+      case "read":
+        return null;
+      case "write":
+      case "execute":
+      case "network": {
+        const reason = `[MCP:${metadata.server}] Tool requires approval (${category})`;
+        const userResult = await askUser(block.name, block.input, reason);
+        if (userResult === "deny") return DENY_MESSAGE;
+        return null;
+      }
+    }
   }
 
   const cmd: string = String(block.input.command ?? "");

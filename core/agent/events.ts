@@ -12,6 +12,7 @@ export type AppEvent =
   | { type: 'cmd:plan' }
   | { type: 'cmd:build' }
   | { type: 'cmd:compact' }
+  | { type: 'cmd:mcp' }
   
   | { type: 'task_list'; tasks: Array<{ id: string; text: string; done: boolean }> }
 
