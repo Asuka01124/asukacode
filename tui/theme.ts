@@ -1,5 +1,5 @@
 export const theme = {
-  appVersion: "1.0.6",
+  appVersion: "2.0.0",
   color: {
 
     text: "#e6e8eb",

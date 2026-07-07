@@ -17,7 +17,7 @@ export class MCPClient {
     });
 
     this.client = new Client(
-      { name: "asukacode", version: "1.0.6" },
+      { name: "asukacode", version: "2.0.0" },
       { capabilities: {} },
     );
 
